@@ -146,7 +146,7 @@ void LoadUIText()
 	prefsData.SlideDirection = YES;
 	prefsData.HitRange = 48;
 	prefsData.HideStatusbar = NO;
-	prefsData.ShowErrorImage = NO;
+	prefsData.ToResizeImage = YES;
 	pfile = fopen(PREFS_PATH, "rb");
 	if(pfile != 0)
 	{

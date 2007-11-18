@@ -45,7 +45,7 @@
 	_scalecell = [[UIPreferencesControlTableCell alloc] initWithFrame:CGRectMake(0.0f, 0.0f, frame.size.width, 48.0f)];
 	[_scalecell setTitle:MAKEUITEXT(10)];
 	UISwitchControl *scaleSwitch = [[[UISwitchControl alloc] initWithFrame:CGRectMake(frame.size.width - 114.0, 11.0f, 114.0f, 48.0f)] autorelease];
-	[scaleSwitch setValue:prefsData.ToScale];
+	[scaleSwitch setValue:prefsData.ToKeepScale];
 	[_scalecell setControl:scaleSwitch];
 	 
 	 
@@ -59,7 +59,7 @@
 	_errorcell = [[UIPreferencesControlTableCell alloc] initWithFrame:CGRectMake(0.0f, 0.0f, frame.size.width, 48.0f)];
 	[_errorcell setTitle:MAKEUITEXT(14)];
 	UISwitchControl *errorSwitch = [[[UISwitchControl alloc] initWithFrame:CGRectMake(frame.size.width - 114.0, 11.0f, 114.0f, 48.0f)] autorelease];
-	[errorSwitch setValue:prefsData.ShowErrorImage];
+	[errorSwitch setValue:prefsData.ToResizeImage];
 	[_errorcell setControl:errorSwitch];
 	
 	
@@ -94,9 +94,9 @@
 {
 	prefsData.IsScroll = [[[_scrollcell control] valueForKey:@"value"] boolValue];
 	prefsData.ToScrollRightTop = [[[_migicell control] valueForKey:@"value"] boolValue];
-	prefsData.ToScale = [[[_scalecell control] valueForKey:@"value"] boolValue];
+	prefsData.ToKeepScale = [[[_scalecell control] valueForKey:@"value"] boolValue];
 	prefsData.SlideDirection = [[[_directioncell control] valueForKey:@"value"] boolValue];
-	prefsData.ShowErrorImage = [[[_errorcell control] valueForKey:@"value"] boolValue];	
+	prefsData.ToResizeImage = [[[_errorcell control] valueForKey:@"value"] boolValue];	
 	prefsData.HideStatusbar = [[[_statusbarcell control] valueForKey:@"value"] boolValue];	
 	int proposedSize = [[_buttonsizecell value] intValue];
 	proposedSize = (proposedSize > MAX_RANGE_SIZE) ? MAX_RANGE_SIZE : proposedSize;

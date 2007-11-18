@@ -25,7 +25,7 @@ struct CGRect screct;
 	_isVertical = true;
 	_matrixprev =	CGAffineTransformRotate(CGAffineTransformMakeScale(1, 1), 0  * M_PI / 180.0f);
 	_isvert = true;
-	
+	_orient = 1;
 //	NSBundle *bundle = [NSBundle mainBundle];
 //	_ileft = [UIImage imageAtPath: [bundle pathForResource:@"left" ofType:@"png"]];
 //	_iright = [UIImage imageAtPath: [bundle pathForResource:@"right" ofType:@"png"]];

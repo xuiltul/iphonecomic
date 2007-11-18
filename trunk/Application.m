@@ -216,7 +216,7 @@ char tmpfilename[MAXPATHLEN];
 	if(button == 1)
 	{
 		[_imageview setFile: [NSString stringWithCString:tmpfilename encoding:NSUTF8StringEncoding]];
-		if([_imageview reloadFile] == 1 && prefsData.ShowErrorImage == NO) [_imageview nextFile];
+		[_imageview reloadFile];// == 1 && prefsData.ShowErrorImage == NO) [_imageview nextFile];
 		[_imageview fitImage];
 		[_transition transition: 1 toView:_imageview];
 		return;

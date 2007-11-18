@@ -62,7 +62,7 @@
 	[self addSubview: _transition];
 	[_transition transition:0 toView:_currentscroll];
 	zipfile = 0;
-	_orient = 0;
+	_orient = 1;
 	return self;
 }
 
@@ -154,7 +154,7 @@
 		return;
 	}
 	SetPageData(_filenamebuf, _currentpos);
-	if([self reloadFile] == 1 && prefsData.ShowErrorImage == NO)
+	if([self reloadFile] == 1 && prefsData.ToResizeImage == NO)
 	{
 		[self prevFile];
 	}
@@ -205,7 +205,7 @@
 	
 	//画像が大きすぎるときの処理
 	int ret = 0;
-	if((frame.width > 1390.0f || frame.height > 1390.0f) && prefsData.ShowErrorImage == YES)
+	if((frame.width > 1390.0f || frame.height > 1390.0f) && prefsData.ToResizeImage == YES)
 	{
 		int width = frame.width, height = frame.height;
 		float aspect = (float)width / (float)height;

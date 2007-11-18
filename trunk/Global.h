@@ -17,7 +17,7 @@ typedef struct PreferenceDataS
 	BOOL ToKeepScale;
 	BOOL SlideDirection;
 	int HitRange;
-	BOOL ShowErrorImage;
+	BOOL ToResizeImage;
 	BOOL HideStatusbar;
 } PreferenceData;
 
