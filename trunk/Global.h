@@ -1,7 +1,7 @@
 #import <CoreFoundation/CoreFoundation.h>
 #import <Foundation/Foundation.h>
 #define UITEXTLEN 1000
-#define MAKEUITEXT(a) [NSString stringWithCString: UIText[a] encoding:NSUTF8StringEncoding]
+//#define MAKEUITEXT(a) [NSString stringWithCString: UIText[a] encoding:NSUTF8StringEncoding]
 typedef struct PageDataS
 {
 	int crc;
@@ -24,7 +24,7 @@ typedef struct PreferenceDataS
 extern PreferenceData prefsData;
 
 extern void LoadUIText();
-extern char UIText[][UITEXTLEN];
+//extern char UIText[][UITEXTLEN];
 
 
 extern PageData GetPageData(char* fname);

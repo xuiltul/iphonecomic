@@ -7,13 +7,15 @@
 	[super initWithFrame:frame];
 	
 	_navbar = [[[UINavigationBar alloc] initWithFrame:CGRectMake(0.0f, 0.0f, frame.size.width, 48.0f)] autorelease];
-	[_navbar showLeftButton:nil withStyle:0 rightButton:MAKEUITEXT(6) withStyle:3]; // Blue Done button
+	[_navbar showLeftButton:nil withStyle:0 rightButton:NSLocalizedString(@"done", nil) withStyle:3]; // Blue Done button
 	[_navbar setBarStyle:0];
 	[_navbar setDelegate:self]; 
 	[self addSubview:_navbar];
 
+//		title = NSLocalizedString(@"View", nil);//,  [lines objectAtIndex:4];
+
 	UINavigationItem *title = [[UINavigationItem alloc] 
-				    initWithTitle:[NSString stringWithCString: UIText[5] encoding:NSUTF8StringEncoding]];
+				    initWithTitle: NSLocalizedString(@"Settings", nil)];
 	[_navbar pushNavigationItem:[title autorelease]];
 
 	_prefstable = [[UIPreferencesTable alloc] initWithFrame:CGRectMake(0.0f, 48.0f, frame.size.width, frame.size.height - 48.0f)];	
@@ -23,41 +25,41 @@
 	[self addSubview:_prefstable];
 	
 	_scrollcell = [[UIPreferencesControlTableCell alloc] initWithFrame:CGRectMake(0.0f, 0.0f, frame.size.width, 48.0f)];
-	[_scrollcell setTitle:MAKEUITEXT(8)];
+	[_scrollcell setTitle:NSLocalizedString(@"Bounce", nil)];
 	UISwitchControl *scrollSwitch = [[[UISwitchControl alloc] initWithFrame:CGRectMake(frame.size.width - 114.0, 11.0f, 114.0f, 48.0f)] autorelease];
 	[scrollSwitch setValue:prefsData.IsScroll];
 	[_scrollcell setControl:scrollSwitch];
 
 
 	_statusbarcell = [[UIPreferencesControlTableCell alloc] initWithFrame:CGRectMake(0.0f, 0.0f, frame.size.width, 48.0f)];
-	[_statusbarcell setTitle:MAKEUITEXT(15)];
+	[_statusbarcell setTitle:NSLocalizedString(@"Hide status bar", nil)];
 	UISwitchControl *statusSwitch = [[[UISwitchControl alloc] initWithFrame:CGRectMake(frame.size.width - 114.0, 11.0f, 114.0f, 48.0f)] autorelease];
 	[statusSwitch setValue:prefsData.HideStatusbar];
 	[_statusbarcell setControl:statusSwitch];
 
 	 
 	_migicell = [[UIPreferencesControlTableCell alloc] initWithFrame:CGRectMake(0.0f, 0.0f, frame.size.width, 48.0f)];
-	[_migicell setTitle:MAKEUITEXT(9)];
+	[_migicell setTitle:NSLocalizedString(@"Move to top right", nil)];
 	UISwitchControl *migiSwitch = [[[UISwitchControl alloc] initWithFrame:CGRectMake(frame.size.width - 114.0, 11.0f, 114.0f, 48.0f)] autorelease];
 	[migiSwitch setValue:prefsData.ToScrollRightTop];
 	[_migicell setControl:migiSwitch];
 	 
 	_scalecell = [[UIPreferencesControlTableCell alloc] initWithFrame:CGRectMake(0.0f, 0.0f, frame.size.width, 48.0f)];
-	[_scalecell setTitle:MAKEUITEXT(10)];
+	[_scalecell setTitle:NSLocalizedString(@"Keep scale", nil)];
 	UISwitchControl *scaleSwitch = [[[UISwitchControl alloc] initWithFrame:CGRectMake(frame.size.width - 114.0, 11.0f, 114.0f, 48.0f)] autorelease];
 	[scaleSwitch setValue:prefsData.ToKeepScale];
 	[_scalecell setControl:scaleSwitch];
 	 
 	 
 	_directioncell = [[UIPreferencesControlTableCell alloc] initWithFrame:CGRectMake(0.0f, 0.0f, frame.size.width, 48.0f)];
-	[_directioncell setTitle:MAKEUITEXT(13)];
+	[_directioncell setTitle:NSLocalizedString(@"Slide to right", nil)];
 	UISwitchControl *directionSwitch = [[[UISwitchControl alloc] initWithFrame:CGRectMake(frame.size.width - 114.0, 11.0f, 114.0f, 48.0f)] autorelease];
 	[directionSwitch setValue:prefsData.SlideDirection];
 	[_directioncell setControl:directionSwitch];
 
 
 	_errorcell = [[UIPreferencesControlTableCell alloc] initWithFrame:CGRectMake(0.0f, 0.0f, frame.size.width, 48.0f)];
-	[_errorcell setTitle:MAKEUITEXT(14)];
+	[_errorcell setTitle:NSLocalizedString(@"Resize big image", nil)];
 	UISwitchControl *errorSwitch = [[[UISwitchControl alloc] initWithFrame:CGRectMake(frame.size.width - 114.0, 11.0f, 114.0f, 48.0f)] autorelease];
 	[errorSwitch setValue:prefsData.ToResizeImage];
 	[_errorcell setControl:errorSwitch];
@@ -69,11 +71,11 @@
 	_buttonsizecell = [[UIPreferencesTextTableCell alloc] initWithFrame:CGRectMake(0.0f, 48.0f, frame.size.width, 48.0f)];
 	NSString	*str = [NSString stringWithFormat:@"%d", prefsData.HitRange];
 	[_buttonsizecell setValue:str];
-	[_buttonsizecell setTitle:MAKEUITEXT(12)];
+	[_buttonsizecell setTitle:NSLocalizedString(@"Button size(48-160)", nil)];
 
 	_scrollspeedcell = [[UIPreferencesTextTableCell alloc] initWithFrame:CGRectMake(0.0f, 48.0f, frame.size.width, 48.0f)];
 	[_scrollspeedcell setValue:[NSString stringWithFormat:@"%d", (int)prefsData.ScrollSpeed]];
-	[_scrollspeedcell setTitle:MAKEUITEXT(16)];
+	[_scrollspeedcell setTitle:NSLocalizedString(@"Scroll speed(1-100)", nil)];
 //	UIPreferencesTextTableCell *_buttonsizecell;
 	 
 	return self;
@@ -172,10 +174,11 @@
 	switch (group)
 	{
 	case 0:
-		title = MAKEUITEXT(7);//,  [lines objectAtIndex:4];
+		title = NSLocalizedString(@"View", nil);//,  [lines objectAtIndex:4];
 		break;
 	case 1:
-		title = MAKEUITEXT(11);
+		title = NSLocalizedString(@"Input", nil);//,  [lines objectAtIndex:4];
+		break;
 	}
 	return title;
 }

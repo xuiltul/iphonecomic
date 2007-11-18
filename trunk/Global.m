@@ -5,7 +5,7 @@
 #define PREFS_PATH "/private/var/root/Library/iComic/ComicPref.dat"
 
 PreferenceData prefsData;
-char UIText[50][UITEXTLEN];
+//char UIText[50][UITEXTLEN];
 PageData pageData[200];
 int PageDataCount = 0;
 
@@ -115,6 +115,7 @@ void SavePrefs()
 
 void LoadUIText()
 {
+/*
 	int i = 0;
 	NSBundle *bundle = [NSBundle mainBundle];
 	NSString *tempstr;
@@ -123,7 +124,7 @@ void LoadUIText()
 	for(i = 0; i < [lines count]; i++)
 	{
 		[[lines objectAtIndex: i] getCString: UIText[i] maxLength: UITEXTLEN encoding:NSUTF8StringEncoding];
-	}
+	}*/
 	
 	
 	FILE *pfile = fopen(DATA_PATH, "rb");
