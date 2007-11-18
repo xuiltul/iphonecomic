@@ -20,6 +20,7 @@
 #import "FileBrowser.h"
 #import "ImageView.h"
 #import "PrefsView.h"
+#import "FileList.h"
 
 #define VIEWCOUNT 4
 
@@ -36,6 +37,7 @@
 	ExNavBar* _navbar;
 	FileBrowser* _browser;
 	FileBrowser* _browser2;
+	ZipFileBrowser *_zbrowser;
 	FileBrowser* _currentBrowser;
 	UITransitionView* _transition;
 	UITransitionView* _tabletransition;

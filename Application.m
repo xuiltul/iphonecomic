@@ -72,11 +72,11 @@ char tmpfilename[MAXPATHLEN];
 	[_navbar setDelegate:self];
 	[_navbar hideButtons];
 	[_navbar setPopDelegate:self];
-	[_navbar showLeftButton:nil withStyle:2 rightButton:[NSString stringWithCString: UIText[5] encoding:NSUTF8StringEncoding] withStyle:0];
+	[_navbar showLeftButton:nil withStyle:2 rightButton:NSLocalizedString(@"Settings", nil) withStyle:0];
 
 	//put string
 	UINavigationItem *navItem;
-	navItem = [[UINavigationItem alloc] initWithTitle: [NSString stringWithCString: UIText[4] encoding:NSUTF8StringEncoding]];
+	navItem = [[UINavigationItem alloc] initWithTitle: NSLocalizedString(@"Select file", nil)];
 	[_navbar pushNavigationItem: navItem];
 
 	
@@ -102,6 +102,11 @@ char tmpfilename[MAXPATHLEN];
 	[_browser2 setExtensions:[NSArray arrayWithObjects:@"zip", @"", nil]];
 	[_browser2 setPath:COMICPATH];
 	[_browser2 setDelegate:self];
+	
+	_zbrowser = [[ZipFileBrowser alloc]  initWithFrame:CGRectMake(0, 0, screct.size.width, screct.size.height - NAVBARHEIGHT)];
+	[_zbrowser setPath:COMICPATH];
+	[_zbrowser setDelegate:self];
+	
 	
 	//setup ImageView
 	_imageview = [[ImageView alloc] initWithFrame:screct];
@@ -200,10 +205,12 @@ char tmpfilename[MAXPATHLEN];
 		UIAlertSheet *sheet = [ [ UIAlertSheet alloc ] initWithFrame: 
 		    CGRectMake(0, 240, 320, 240) ];
 		[ sheet setTitle: file ];
-		[ sheet setBodyText:[NSString stringWithCString: UIText[0] encoding:NSUTF8StringEncoding]];
-		[ sheet addButtonWithTitle:[NSString stringWithCString: UIText[1] encoding:NSUTF8StringEncoding]];
-		[ sheet addButtonWithTitle:[NSString stringWithCString: UIText[2] encoding:NSUTF8StringEncoding]];
-		[ sheet addButtonWithTitle:[NSString stringWithCString: UIText[3] encoding:NSUTF8StringEncoding]];
+		[ sheet setBodyText: NSLocalizedString(@"Select action", nil)];
+		[ sheet addButtonWithTitle: NSLocalizedString(@"Start with saved position", nil)];
+		[ sheet addButtonWithTitle: NSLocalizedString(@"Start new book", nil)];
+		[ sheet addButtonWithTitle: NSLocalizedString(@"Page List", nil)];
+		[ sheet addButtonWithTitle: NSLocalizedString(@"Cancel", nil)];
+
 		[ sheet setDelegate: self ];
 		[ sheet presentSheetFromAboveView: _currentBrowser ];
         }
