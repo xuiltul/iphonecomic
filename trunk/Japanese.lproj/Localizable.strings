@@ -40,6 +40,8 @@
 	<string>右にスライド</string>
 	<key>Resize big image</key>
 	<string>大きい画像をリサイズ</string>
+	<key>Rotation</key>
+	<string>回転</string>
 </dict>
 </plist>
 

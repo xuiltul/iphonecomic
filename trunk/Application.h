@@ -42,9 +42,9 @@
 	UITransitionView* _transition;
 	UITransitionView* _tabletransition;
 	PrefsView *_prefsview;
-	
 	ImageView* _imageview;
-	NSString* _filename;
 }
+
+-(void) gravity: (int)x  gy:(int) y gz:(int)z;
 @end
 

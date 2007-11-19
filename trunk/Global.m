@@ -144,10 +144,11 @@ void LoadUIText()
 	prefsData.ScrollSpeed = 97;
 	prefsData.ToScrollRightTop = YES;
 	prefsData.ToKeepScale = YES;
-	prefsData.SlideDirection = YES;
+	prefsData.SlideDirection = NO;
 	prefsData.HitRange = 48;
 	prefsData.HideStatusbar = NO;
 	prefsData.ToResizeImage = YES;
+	prefsData.Rotation = 0;
 	pfile = fopen(PREFS_PATH, "rb");
 	if(pfile != 0)
 	{

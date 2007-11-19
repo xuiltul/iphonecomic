@@ -173,6 +173,12 @@ struct CGRect screct;
 	[self scrollToTopRight];
 }
 
+- (void) dealloc
+{
+	[_imageview release];
+	[_currentimage release];
+//	UIImage* _ileft, *_iright, *_ihome;
+}
 
 - (void) resizeImage
 {

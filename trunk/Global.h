@@ -19,6 +19,7 @@ typedef struct PreferenceDataS
 	int HitRange;
 	BOOL ToResizeImage;
 	BOOL HideStatusbar;
+	int Rotation;
 } PreferenceData;
 
 extern PreferenceData prefsData;

@@ -78,6 +78,18 @@
 	[_scrollspeedcell setTitle:NSLocalizedString(@"Scroll speed(1-100)", nil)];
 //	UIPreferencesTextTableCell *_buttonsizecell;
 	 
+ 	_segCtrl = [[UISegmentedControl alloc] initWithFrame:CGRectMake(20.0f, 3.0f, 280.0f, 55.0f)];
+	[_segCtrl insertSegment:0 withTitle:@"G" animated:NO];
+	[_segCtrl insertSegment:1 withTitle:@"1" animated:NO];
+	[_segCtrl insertSegment:2 withTitle:@"2" animated:NO];
+	[_segCtrl insertSegment:3 withTitle:@"3" animated:NO];
+	[_segCtrl insertSegment:4 withTitle:@"4" animated:NO];
+	[_segCtrl setDelegate: self];
+	_segCell = [[UIPreferencesTextTableCell alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 320, 48.0f)];
+	[_segCell setDrawsBackground:NO];
+	[_segCell addSubview: _segCtrl];
+	[_segCtrl selectSegment: prefsData.Rotation];
+	 
 	return self;
 }
 
@@ -86,6 +98,25 @@
 	_delegate = dele;
 //	[super setDelegate: dele];
 }
+
+- (void) dealloc
+{
+	
+	[_prefstable release];
+	[_navbar release];
+	[_scrollcell release];
+	[_scrollspeedcell release];
+	[_statusbarcell release];
+	[_migicell release];
+	[_scalecell release];
+	[_buttonsizecell release];
+	[_directioncell release];
+	[_errorcell release];
+	[_segCtrl release];
+	[_segCell release];
+}
+
+
 #define MAX_RANGE_SIZE 160
 #define MIN_RANGE_SIZE 48
 #define MAX_SCROLL_SIZE 100
@@ -118,7 +149,7 @@
 
 - (int)numberOfGroupsInPreferencesTable:(UIPreferencesTable *)table
 {
-	return 2;
+	return 3;
 }
 
 - (int)preferencesTable:(UIPreferencesTable *)table numberOfRowsInGroup:(int)group
@@ -129,6 +160,8 @@
 			return 5;	
 		case 1:
 			return 3;
+		case 2: 
+			return 1;
 	}
 }
 
@@ -165,6 +198,10 @@
 		if(row == 1)return _errorcell;
 		if(row == 2)return _buttonsizecell;
 	}
+	else if(group == 2)
+	{
+		if(row == 0) return _segCell;
+	}
 	return nil;
 }
 
@@ -179,8 +216,16 @@
 	case 1:
 		title = NSLocalizedString(@"Input", nil);//,  [lines objectAtIndex:4];
 		break;
+	case 2:
+		title = NSLocalizedString(@"Rotation", nil);
+		break;
 	}
 	return title;
+}
+
+- (void) segmentedControl: (UISegmentedControl *)segment selectedSegmentChanged: (int)seg
+{
+	prefsData.Rotation = seg;
 }
 
 @end

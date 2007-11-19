@@ -42,7 +42,10 @@
 	UIPreferencesTextTableCell *_buttonsizecell;
 	UIPreferencesControlTableCell *_directioncell;
 	UIPreferencesControlTableCell *_errorcell;
-	UITransitionView* trans;
+	
+	UISegmentedControl *_segCtrl;
+	UIPreferencesTextTableCell *_segCell;
+	
 	id _delegate;
 }
 	

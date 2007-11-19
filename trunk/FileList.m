@@ -99,27 +99,18 @@
 
 - (UITableCell *)table:(UITable *)table cellForRow:(int)row column:(UITableColumn *)col {
         BOOL isDir = NO;
-        char buf0[MAXPATHLEN];
-        
+       
 	UIImageAndTextTableCell *cell = [[UIImageAndTextTableCell alloc] init];
-	NSArray *arr = [[_files objectAtIndex: row] pathComponents];
-
-	[cell setTitle: [arr objectAtIndex: [arr count] - 1]];
+	[cell setTitle: [[_files objectAtIndex:row] lastPathComponent]];
 	return cell;
 }
 
 - (void)tableRowSelected:(NSNotification *)notification {
 //	NSLog([self selectedFile]);
 	if( [_delegate respondsToSelector:@selector( zipFileBrowser:fileSelected: )] )
-		[_delegate zipFileBrowser:self fileSelected:[self selectedFile]];
+		[_delegate zipFileBrowser:self fileSelected: [_table selectedRow]];
 }
 
-- (NSString *)selectedFile {
-	if ([_table selectedRow] == -1)
-		return nil;
-//	NSLog(@"here!");
-	return [_path stringByAppendingPathComponent: [_files objectAtIndex: [_table selectedRow]]];
-}
 @end
 
 

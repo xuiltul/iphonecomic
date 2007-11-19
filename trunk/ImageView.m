@@ -66,6 +66,13 @@
 	return self;
 }
 
+-(void) gravity: (int)x  gy:(int) y gz:(int)z
+{
+//	NSLog(@"%f %f %f", x, y, z);
+	[_currentscroll scrollByDelta: CGSizeMake(-x * 100, -y * 100) animated:NO];
+//	[_currentscroll scrollByDelta: CGSizeMake(1, 1) animated:NO];
+}
+
 -(void) setScroll:(BOOL) flag decelerationFactor:(float)dec
 {
 	[_scroller1 setAllowsRubberBanding:flag];
@@ -85,7 +92,7 @@
 	_currentpos = 0;
 	//開いてたら閉じる
 	if(zipfile != 0) unzClose(zipfile);
-	NSLog(@"hoge");
+//	NSLog(@"hoge");
 	//まずは開いて初めのファイルへ.
 	char buf[MAXPATHLEN];
 	[fname getCString: buf maxLength:MAXPATHLEN encoding:NSUTF8StringEncoding];
@@ -100,6 +107,11 @@
 	unzGetGlobalInfo(zipfile, &ugi);
 
 //	NSLog(@"%d", ugi.number_entry);
+	
+	if(filenamelist != nil)
+	{
+		[filenamelist release];
+	}
 	filenamelist = [[NSMutableArray alloc] initWithCapacity: ugi.number_entry];
 	while(ret == 0)
 	{
@@ -111,7 +123,7 @@
 			 continue;
 		}
 		NSString *temp = [NSString stringWithCString: buf encoding:NSShiftJISStringEncoding];
-		NSLog(temp);
+	//	NSLog(temp);
 		if(temp != nil) 
 		{
 			[filenamelist addObject:temp];
@@ -140,7 +152,10 @@
 		return;
 	}
 	SetPageData(_filenamebuf, _currentpos);
-	[self reloadFile];
+	if([self reloadFile] == 1)
+	{
+		[self nextFile];
+	}
 //	[_progressIndicator stopAnimation];
 //	[_progressIndicator removeFromSuperview];
 }
@@ -154,10 +169,18 @@
 		return;
 	}
 	SetPageData(_filenamebuf, _currentpos);
-	if([self reloadFile] == 1 && prefsData.ToResizeImage == NO)
+	if([self reloadFile] == 1)
 	{
 		[self prevFile];
 	}
+}
+
+-(void) dealloc
+{
+	[_scroller1 release];
+	[_scroller2 release];
+	[filenamelist release];
+	[_transition release];
 }
 
 -(int)reloadFile
@@ -191,10 +214,15 @@
 	int Flag = 0;
 	///ファイルの解凍までは完全にできてるっぽい
 	UIImage * nimage = [[UIImage alloc] initWithData: [NSData dataWithBytes:buf length:read] cache: true];
-	
+	if(nimage == nil)
+	{
+		return 1;
+	}
 	//resizeする？
 	toResize = false;
 	CGSize frame = [nimage size];
+	NSLog(@"%x  %f,%f", nimage, frame.width, frame.height);
+
 	float aspectr = (frame.width / frame.height) / (_imagesize.width / _imagesize.height);
 	float wr = frame.width / _imagesize.width;
 	float hr = frame.height / _imagesize.height;
