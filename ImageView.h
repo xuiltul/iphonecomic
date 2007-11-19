@@ -34,5 +34,7 @@
 -(void) fitImage;
 -(void) setOrientation: (int) orientation;
 -(void) setScroll:(BOOL) flag decelerationFactor:(float)dec;
+-(void) gravity: (int)x  gy:(int) y gz:(int)z;
+
 @end
 
