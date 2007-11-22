@@ -6,7 +6,10 @@
 
 PreferenceData prefsData;
 //char UIText[50][UITEXTLEN];
-PageData pageData[200];
+#define MAXBOOKS 1000
+PageData pageData[MAXBOOKS];
+char pageDataAccess[MAXBOOKS];
+
 int PageDataCount = 0;
 
 unsigned crc_code(int len, char *data)
@@ -40,6 +43,96 @@ PageData GetPageData(char* fname)
 }
 
 #define MAXPATHLEN 512
+
+void InitPageData()
+{
+	LoadPageData();
+	FindFileRecursively(COMICPATH);
+	RefreshPageData();
+}
+
+void FindFileRecursively(NSString* _path)
+{
+        BOOL isDir;
+        char buf[MAXPATHLEN];
+
+	if([_path characterAtIndex: [_path length] - 1] != '/')
+	{
+		_path = [_path stringByAppendingString: @"/"];
+	}
+        
+        
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+	NSArray *tempArray = [[NSArray alloc] 
+	initWithArray:[fileManager directoryContentsAtPath:_path]];
+	if ([fileManager fileExistsAtPath: _path] == NO) {
+		return;
+	}
+
+        NSString *file;
+        NSEnumerator *dirEnum = [tempArray objectEnumerator];
+	while (file = [dirEnum nextObject]) 
+	{
+		file = [_path stringByAppendingString: file];
+		NSLog(file);
+		if ([fileManager fileExistsAtPath:file isDirectory:&isDir] && isDir)
+		{
+			FindFileRecursively(file);
+		}
+		else
+		{
+			[file getCString: buf maxLength:MAXPATHLEN encoding:NSUTF8StringEncoding];
+			AddPageData(buf);
+		}
+ 	}
+	[tempArray release];
+}
+
+void RefreshPageData()
+{
+	int i = 0 , j = 0;
+	for(i = PageDataCount - 1; i >= 0; i--)
+	{
+		//削除された
+		if(pageDataAccess[i] == 0)
+		{
+			for(j = i; i < PageDataCount; i++)
+			{
+				pageData[j] = pageData[j + 1];
+				if(pageData[j].crc == 0) break;
+			}
+			pageData[PageDataCount - 1].crc = pageData[PageDataCount - 1].page = 0;
+			PageDataCount --;
+		}
+	}
+}
+
+//ここでページデータを追加する。
+//あったら、アクセスをオン、なかったら追加する。
+void AddPageData(char *fname)
+{
+	int i = 0;
+	int crc = crc_code(strlen(fname), fname);
+	if(crc == 0) return;
+	for(i = 0; i < PageDataCount; i++)
+	{
+		if(pageData[i].crc == crc)
+		{
+			pageDataAccess[i] = 1;
+			return;
+		}
+	}
+	if(PageDataCount == MAXBOOKS) return;
+	
+	//追加
+	pageData[PageDataCount].crc = crc;
+	pageData[PageDataCount].page = -2;
+	pageDataAccess[PageDataCount] = 1;
+	PageDataCount++;
+	return;
+}
+
+
 void SetPageData(char* fname, int page)
 {
 	int i = 0;
@@ -61,6 +154,7 @@ void SetPageData(char* fname, int page)
 	return;
 }
 
+/*
 void RemovePageData(char* fname)
 {
 	int i = 0, j = 0;
@@ -81,14 +175,13 @@ void RemovePageData(char* fname)
 	}
 	if(crc == 0) return;
 	return;
-}
+}*/
 
 
 void SavePageData()
 {
 	NSFileManager *myFile = [NSFileManager defaultManager];
 	
-	//[myFile changeCurrentDirectoryPath: @"/private/var/root/Library/"];
 	if(![myFile fileExistsAtPath: DATA_DIR])
 		[myFile createDirectoryAtPath: DATA_DIR attributes:nil];
 
@@ -113,20 +206,8 @@ void SavePrefs()
 	}
 }
 
-void LoadUIText()
+void LoadPageData()
 {
-/*
-	int i = 0;
-	NSBundle *bundle = [NSBundle mainBundle];
-	NSString *tempstr;
-	tempstr = [[[NSString alloc] initWithData:[NSData dataWithContentsOfFile:[bundle pathForResource:@"uitext" ofType:@""]] encoding:NSUTF8StringEncoding] autorelease];
-	NSArray *lines = [tempstr componentsSeparatedByString:@","];
-	for(i = 0; i < [lines count]; i++)
-	{
-		[[lines objectAtIndex: i] getCString: UIText[i] maxLength: UITEXTLEN encoding:NSUTF8StringEncoding];
-	}*/
-	
-	
 	FILE *pfile = fopen(DATA_PATH, "rb");
 	PageDataCount = 0;
 	if(pfile != 0) 
@@ -139,6 +220,11 @@ void LoadUIText()
 		}
 		fclose(pfile);
 	}
+}
+
+void LoadUIText()
+{
+	InitPageData();
 	
 	prefsData.IsScroll = YES;
 	prefsData.ScrollSpeed = 97;
@@ -149,7 +235,7 @@ void LoadUIText()
 	prefsData.HideStatusbar = NO;
 	prefsData.ToResizeImage = YES;
 	prefsData.Rotation = 0;
-	pfile = fopen(PREFS_PATH, "rb");
+	FILE *pfile = fopen(PREFS_PATH, "rb");
 	if(pfile != 0)
 	{
 		fread(&prefsData, sizeof(PreferenceData), 1, pfile);

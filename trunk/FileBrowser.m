@@ -18,6 +18,7 @@
 
 #import "FileBrowser.h"
 #import "zlib/unzip.h"
+#import "Global.h"
 #import <UIKit/UISimpleTableCell.h>
 #define MAXPATHLEN 512
 
@@ -48,6 +49,8 @@
 	NSBundle *bundle = [NSBundle mainBundle];
 	_folder = [UIImage imageAtPath: [bundle pathForResource:@"folder" ofType:@"png"]];
 	_books = [UIImage imageAtPath: [bundle pathForResource:@"books" ofType:@"png"]];
+	_bookss = [UIImage imageAtPath: [bundle pathForResource:@"bookss" ofType:@"png"]];
+	_booksf = [UIImage imageAtPath: [bundle pathForResource:@"booksf" ofType:@"png"]];
 	return self;
 }
 
@@ -180,9 +183,19 @@
 		//[cell setImage: ];
 	}
 	else
-	{
-	     [cell setImage: _books];
-	     [[cell iconImageView] setFrame:CGRectMake(-10,0,32,32)];
+	{	
+		[file getCString: buf0 maxLength:MAXPATHLEN encoding:NSUTF8StringEncoding];
+		int t = GetPageData(buf0).page;
+		if(t == -1)
+			[cell setImage: _booksf];
+		else if(t == -2)
+		{
+			[cell setImage: _books];
+		}
+		else
+			[cell setImage: _bookss];
+			
+	     [[cell iconImageView] setFrame:CGRectMake(-10,0,12,12)];
 	}
 
 	return cell;
