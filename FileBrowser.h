@@ -28,7 +28,7 @@
 	int _rowCount;
 	id _delegate;
 	UIImage *_folder;
-	UIImage *_books;
+	UIImage *_books, *_booksf, *_bookss;
 }
 
 - (id)initWithFrame:(CGRect)rect;

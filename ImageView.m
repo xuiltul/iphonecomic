@@ -136,6 +136,7 @@
 
 -(void) setPage : (int) page
 {
+	if(page < 0) page = 0;
 	_currentpos = page;
 }
 
@@ -148,7 +149,8 @@
 	if(_currentpos >= [filenamelist count])
 	{
 		[self dofileEnd];
-		RemovePageData(_filenamebuf);
+		SetPageData(_filenamebuf, -1);
+		//RemovePageData(_filenamebuf);
 		return;
 	}
 	SetPageData(_filenamebuf, _currentpos);

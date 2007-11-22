@@ -20,12 +20,14 @@ struct CGRect screct;
 	_mdelegate = nil;
 	_imageview = [[UIImageView alloc] initWithFrame:frame];
 	[self addSubview: _imageview];
-	[super setTapDelegate: self];
 	_centerpoint = CGPointMake(320 / 2, SCHEIGHT / 2);
 	_isVertical = true;
 	_matrixprev =	CGAffineTransformRotate(CGAffineTransformMakeScale(1, 1), 0  * M_PI / 180.0f);
 	_isvert = true;
 	_orient = 1;
+	
+	[super setTapDelegate: self];
+	[super setGestureDelegate: self];
 //	NSBundle *bundle = [NSBundle mainBundle];
 //	_ileft = [UIImage imageAtPath: [bundle pathForResource:@"left" ofType:@"png"]];
 //	_iright = [UIImage imageAtPath: [bundle pathForResource:@"right" ofType:@"png"]];
@@ -33,10 +35,19 @@ struct CGRect screct;
 	return self;
 }
 
+- (void)gestureStarted:(GSEvent *)event
+{
+}
+- (void)gestureChanged:(GSEvent *)event
+{
+}
+- (void)gestureEnded:(GSEvent *)event
+{
+}
 
 - (void)view:(UIView *)view handleTapWithCount:(int)count event:(GSEvent *)event
 {
-	//NSLog(@"%d", count);
+	NSLog(@"%d", count);
 }
 
 -(void) setOrientation: (int) orientation animate:(bool)anime

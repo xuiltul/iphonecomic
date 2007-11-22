@@ -9,9 +9,7 @@
 #import "Global.h"
 #import <GraphicsServices/GraphicsServices.h>
 
-#define MAXPATHLEN 512
 #define NAVBARHEIGHT 48
-#define COMICPATH @"/var/root/Media/Comic/"
 
 
 char tmpfilename[MAXPATHLEN];
@@ -224,6 +222,7 @@ void initialize(int hz)
 	[_tabletransition release];
 	[_prefsview release];
 	[_imageview release];
+	[super dealloc];
 }
 
 - (void)prefsView : (PrefsView *)prefs done: (id) unused
@@ -247,7 +246,8 @@ void initialize(int hz)
 {
 	if([_tabletransition containsView: _zbrowser])
 	{
-		[_tabletransition transition:2 toView: _currentBrowser];	 
+		[_currentBrowser reloadData];
+		[_tabletransition transition:2 toView: _currentBrowser];	
 		return;	
 	}
 	else
