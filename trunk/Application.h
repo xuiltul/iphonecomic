@@ -45,6 +45,6 @@
 	ImageView* _imageview;
 }
 
--(void) gravity: (int)x  gy:(int) y gz:(int)z;
+-(void) gravity: (float)x  gy:(float) y gz:(float)z;
 @end
 

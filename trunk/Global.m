@@ -11,6 +11,7 @@ PageData pageData[MAXBOOKS];
 char pageDataAccess[MAXBOOKS];
 
 int PageDataCount = 0;
+int IsViewingComic = 0;
 
 unsigned crc_code(int len, char *data)
 {
@@ -235,6 +236,10 @@ void LoadUIText()
 	prefsData.HideStatusbar = NO;
 	prefsData.ToResizeImage = YES;
 	prefsData.Rotation = 0;
+	prefsData.GravitySlide = NO;
+	prefsData.ButtonSlide = YES;
+	prefsData.SwipeSlide = NO;
+	
 	FILE *pfile = fopen(PREFS_PATH, "rb");
 	if(pfile != 0)
 	{

@@ -66,10 +66,52 @@
 	return self;
 }
 
--(void) gravity: (int)x  gy:(int) y gz:(int)z
+float averagex = 0;
+int cnt = 0;
+bool flag1 = false;
+bool flag2 = false;
+
+-(void) gravity: (float)x  gy:(float) y gz:(float)z
 {
+	if(prefsData.GravitySlide == NO) return;
+	if(IsViewingComic == 0) return;
+	float threshold1 = 0.1f;
+	float threshold2 = 0.05f;
+	float hogaa = 20;
+	averagex = averagex * (hogaa - 1) / hogaa + x / hogaa;
+//	NSLog(@"%f, %f", averagex, x);
+	cnt++;
+	if(cnt < 20) return;
+	float dist = averagex - x;
+	
+	
+	if(dist < -threshold1 && flag1 == false && flag2 == false)
+	{
+		flag1 = true;
+		NSLog(@"next");
+	}
+	if(dist > threshold1 && flag2 == false && flag1 == false)
+	{
+		flag2 = true;
+		NSLog(@"prev");
+	}
+	
+	if(flag1 == true && fabs(dist) < threshold2)
+	{
+		NSLog(@"next2");
+		[self scrollImage: nil fileNext: nil];
+		flag1 = false;
+	}
+	
+	if(flag2 == true && fabs(dist) < threshold2)
+	{
+		NSLog(@"prev2");
+		[self scrollImage: nil filePrev: nil];		
+		flag2 = false;
+	}
+
 //	NSLog(@"%f %f %f", x, y, z);
-	[_currentscroll scrollByDelta: CGSizeMake(-x * 100, -y * 100) animated:NO];
+//	[_currentscroll scrollByDelta: CGSizeMake(-x * 10, -y * 10) animated:NO];
 //	[_currentscroll scrollByDelta: CGSizeMake(1, 1) animated:NO];
 }
 
@@ -187,6 +229,7 @@
 
 -(int)reloadFile
 {
+	if(zipfile == 0) return -1;
 	if(_currentpos < 0 || _currentpos > [filenamelist count]) 
 	{
 		[self dofileEnd];
@@ -218,8 +261,10 @@
 	UIImage * nimage = [[UIImage alloc] initWithData: [NSData dataWithBytes:buf length:read] cache: true];
 	if(nimage == nil)
 	{
+		NSLog(@"nil image!");
 		return 1;
 	}
+	
 	//resizeする？
 	toResize = false;
 	CGSize frame = [nimage size];
@@ -285,6 +330,7 @@ BOOL isDoing = NO;
 {
 	if(isDoing) return;
 	isDoing = YES;
+	CGPoint pt = [_currentscroll offset];
 	_currentsize = [_currentscroll getPercent];
 	if(_currentscroll == _scroller1) _currentscroll = _scroller2; else _currentscroll = _scroller1;
 	int trans = 0;
@@ -315,9 +361,24 @@ BOOL isDoing = NO;
 
 
 	[self prevFile]; 
-	if(prefsData.ToKeepScale  && toResize == false) [_currentscroll setPercent: _currentsize];
-	else [_currentscroll fitRect];
-	if(prefsData.ToScrollRightTop)[_currentscroll scrollToTopRight];
+	if(prefsData.ToKeepScale  && toResize == false)
+	{
+		 [_currentscroll setPercent: _currentsize];
+	}
+	else 
+	{
+		[_currentscroll fitRect];
+		NSLog(@"fitRect");
+	}
+	
+	if(prefsData.ToScrollRightTop)
+	{
+		[_currentscroll scrollToTopRight];
+	}
+	else
+	{
+		[_currentscroll setOffset:pt];
+	}
 	isDoing = NO;
 	return;
 }
@@ -326,7 +387,7 @@ BOOL isDoing = NO;
 {
 	if(isDoing) return;
 	isDoing = YES;
-
+	CGPoint pt = [_currentscroll offset];
 	_currentsize = [_currentscroll getPercent];
 	if(_currentscroll == _scroller1) _currentscroll = _scroller2; else _currentscroll = _scroller1;
 	int trans = 0;
@@ -365,7 +426,14 @@ BOOL isDoing = NO;
 	{
 		[_currentscroll fitRect];
 	}
-	if(prefsData.ToScrollRightTop)[_currentscroll scrollToTopRight];
+	if(prefsData.ToScrollRightTop)
+	{
+		[_currentscroll scrollToTopRight];
+	}
+	else
+	{
+		[_currentscroll setOffset:pt];
+	}
 	isDoing = NO;
 	return;
 }
