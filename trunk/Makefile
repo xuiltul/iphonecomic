@@ -10,10 +10,13 @@ LDFLAGS=-lobjc \
 	-framework GraphicsServices \
 	-framework CoreSurface \
 	-framework CoreAudio \
+	-framework IOKit \
 	-larmfp 
 
 APPNAME=iComic
-FILES=mainapp.o Application.o FileBrowser.o ImageView.o ScrollImage.o Global.o PrefsView.o\
+FILES=mainapp.o Application.o FileBrowser.o \
+ImageView.o ScrollImage.o Global.o PrefsView.o \
+FileList.o \
 zlib/ioapi.o zlib/unzip.o zlib/libz.a 
 
 all:    $(APPNAME) package
@@ -34,7 +37,8 @@ package: $(APPNAME)
 	mv $(APPNAME) $(APPNAME).app/$(APPNAME)
 	cp Info.plist $(APPNAME).app/Info.plist
 	cp *.png $(APPNAME).app/
-	cp uitext $(APPNAME).app/uitext
+	cp -r Japanese.lproj $(APPNAME).app/
+	cp ReadMe $(APPNAME).app/ReadMe
 
 debug: $(APPNAME) package
 
