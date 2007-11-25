@@ -28,13 +28,13 @@
 -(void) nextFile;
 -(void) prevFile;
 -(void) dofileEnd;
--(int) reloadFile;
+-(int)reloadFile;
 -(void) setPage : (int) page;
 -(void) setFileDelegate: (id) dele;
 -(void) fitImage;
 -(void) setOrientation: (int) orientation;
 -(void) setScroll:(BOOL) flag decelerationFactor:(float)dec;
--(void) gravity: (int)x  gy:(int) y gz:(int)z;
+-(void) gravity: (float)x  gy:(float) y gz:(float)z;
 
 @end
 

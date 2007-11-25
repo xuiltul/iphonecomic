@@ -42,6 +42,14 @@
 	<string>大きい画像をリサイズ</string>
 	<key>Rotation</key>
 	<string>回転</string>
+	<key>Gravity page slide</key>
+	<string>重力ページ送り</string>
+	<key>Button page slide</key>
+	<string>ボタンページ送り</string>
+	<key>Swipe page slide</key>
+	<string>スワイプページ送り</string>
+	<key>help</key>
+	<string>ヘルプ</string>
 </dict>
 </plist>
 

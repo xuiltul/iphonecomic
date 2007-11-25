@@ -42,6 +42,11 @@
 	UIPreferencesTextTableCell *_buttonsizecell;
 	UIPreferencesControlTableCell *_directioncell;
 	UIPreferencesControlTableCell *_errorcell;
+
+	UIPreferencesControlTableCell *_gravitycell;
+	UIPreferencesControlTableCell *_buttoncell;
+	UIPreferencesControlTableCell *_swipecell;
+	
 	
 	UISegmentedControl *_segCtrl;
 	UIPreferencesTextTableCell *_segCell;

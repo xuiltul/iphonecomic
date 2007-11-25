@@ -26,6 +26,9 @@ typedef struct PreferenceDataS
 	BOOL ToResizeImage;
 	BOOL HideStatusbar;
 	int Rotation;
+	BOOL GravitySlide;
+	BOOL ButtonSlide;
+	BOOL SwipeSlide;
 } PreferenceData;
 
 extern PreferenceData prefsData;
@@ -33,7 +36,7 @@ extern PreferenceData prefsData;
 extern void LoadUIText();
 //extern char UIText[][UITEXTLEN];
 
-
+extern int IsViewingComic;
 extern PageData GetPageData(char* fname);
 extern void SetPageData(char* fname, int page);
 //extern void RemovePageData(char* fname);

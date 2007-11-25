@@ -3,15 +3,19 @@
 #import "Global.h"
 
 float kMinScale = (0.1f);
-#define kMaxScale (1.0f)
+#define kMaxScale (2.0f)
 int SCHEIGHT = 460;
 struct CGRect screct;
 
 @implementation ScrollImage
 - (id)initWithFrame:(struct CGRect)frame{
 	screct = [UIHardware fullScreenApplicationContentRect];
-
 	screct.origin.x = screct.origin.y = 0;
+	if(prefsData.HideStatusbar)
+		screct.size.height = 480;
+	else
+		screct.size.height = 460;
+		
 	SCHEIGHT = screct.size.height;
 	
 	[super initWithFrame: frame];
@@ -35,15 +39,6 @@ struct CGRect screct;
 	return self;
 }
 
-- (void)gestureStarted:(GSEvent *)event
-{
-}
-- (void)gestureChanged:(GSEvent *)event
-{
-}
-- (void)gestureEnded:(GSEvent *)event
-{
-}
 
 - (void)view:(UIView *)view handleTapWithCount:(int)count event:(GSEvent *)event
 {
@@ -141,22 +136,24 @@ struct CGRect screct;
 
 - (void) fitRect
 {
-	float w = 320, h = SCHEIGHT;// if(_isvert == false){w = 480;h = 320;}
+	float w = screct.size.width, h = screct.size.height;// if(_isvert == false){w = 480;h = 320;}
 	CGSize imageRect = _imagesize;
 	CGRect imageViewRect = CGRectMake(0, 0, w, h);
 	if(_isvert)
 	{
 		//	NSLog(@"%f %f, %f", _fCurrentPercent, imageRect.width, imageRect.height);
 		//Create viewing rectangle for image that centers the image, and contracts it if needed
-		if (imageRect.width > imageViewRect.size.width || imageRect.height > imageViewRect.size.height)
+		if (imageRect.width >= imageViewRect.size.width || imageRect.height >= imageViewRect.size.height)
 		{
 			float imageAspect = imageRect.width / imageRect.height;
 
-			imageViewRect.size.height = h;
-			imageViewRect.size.width = imageViewRect.size.height * imageAspect;
-			_fCurrentPercent = (imageViewRect.size.width / imageRect.width);
-		
-			if (imageRect.width > imageViewRect.size.width)
+			if(imageRect.height > imageRect.width)
+			{
+				imageViewRect.size.height = h;
+				imageViewRect.size.width = imageViewRect.size.height * imageAspect;
+				_fCurrentPercent = (imageViewRect.size.width / imageRect.width);
+			}
+			else
 			{
 				imageViewRect.size.width = w;
 				imageViewRect.size.height = imageViewRect.size.width / imageAspect;
@@ -167,9 +164,10 @@ struct CGRect screct;
 	}
 	else
 	{
-		_fCurrentPercent = (SCHEIGHT / imageRect.width);
+		_fCurrentPercent = (screct.size.height / imageRect.width);
 		//_fCurrentPercent = (320 / imageRect.height);
 	}
+	
 	kMinScale = _fCurrentPercent;
 
 	_fCurrentPercent *= 1.001f;
@@ -289,13 +287,14 @@ struct CGRect screct;
 	else
 	{
 		if(_orient == 3)
-			[self scrollRectToVisible: CGRectMake(frame.size.height - 2, 0, 2, 2)];
+			[self scrollRectToVisible: CGRectMake(frame.size.height - 1, 0, 1, 1)];
 		else
 			[self setOffset: CGPointMake(0,0)];
 			
 	}
 }
 
+CGPoint mPoint;
 
 - (float) getPercent
 {
@@ -304,6 +303,7 @@ struct CGRect screct;
 
 - (void)mouseDown:(GSEventRef)theEvent
 {
+	mPoint.x = -1;
 	float hit = prefsData.HitRange;
 	int w = 320, h = SCHEIGHT;// if(_isVertical == false){w = 480;h = 320;}
 
@@ -353,6 +353,13 @@ struct CGRect screct;
 		hrb = temp;
 	}
 	
+	//ボタンページめくりがなくて、かつ他のがある
+	if(prefsData.ButtonSlide == 0 && 
+		(prefsData.SwipeSlide != 0 || prefsData.GravitySlide != 0))
+	{
+		hlb = hrb = 0;
+	}
+
 	//左上
 	if(hlt) 
 	{
@@ -403,6 +410,10 @@ struct CGRect screct;
 		}
 		///_bZooming = true;
 	}
+	else
+	{
+		mPoint = r;
+	}
 
 	[super mouseDown:theEvent];
 }
@@ -410,6 +421,7 @@ struct CGRect screct;
 - (void)mouseUp:(GSEventRef)theEvent
 {
 	_bZooming = false;
+
 	[super mouseUp:theEvent];
 }
 
@@ -445,6 +457,8 @@ struct CGRect screct;
 - (void)mouseDragged:(GSEventRef)theEvent
 {
 
+	CGPoint mp = GSEventGetLocationInWindow(theEvent);
+
 //_ileft
 	if(!_bZooming)
 	{	
@@ -476,6 +490,51 @@ struct CGRect screct;
 		if(_bZooming) return;
 
 	} 
+	else
+	{
+		if(mPoint.x > 0 && prefsData.SwipeSlide)
+		{
+			float fDistance = sqrt((mPoint.x-mp.x)*(mPoint.x-mp.x) + (mPoint.y - mp.y) * (mPoint.y - mp.y));
+			float farg = atan2(mPoint.y-mp.y, mPoint.x-mp.x);
+			NSLog(@"%f", farg);
+			switch(_orient)
+			{
+				case 2:
+					farg = M_PI-farg;
+					break;
+				case 3:
+					farg -= M_PI / 2;
+					break;
+				case 4:
+					farg += M_PI / 2;
+					break;					
+			}
+			if(farg <  M_PI / 10 && farg > - M_PI / 10 && fDistance > 50)
+			{
+				if([_mdelegate respondsToSelector:@selector(scrollImage:filePrev:)])
+				{
+					[_mdelegate scrollImage:self filePrev:self];
+					return;
+				}
+			}
+			
+			float minf = 0.9f;
+			float maxf = 1.1f;
+			// -9 / 10 to -11 / 10
+			if( ( ( farg < -M_PI * minf && farg > -M_PI * maxf )
+			// 9 / 10 to 11 / 10
+			 || ( farg > M_PI * minf && farg < M_PI * maxf ) )
+			 && fDistance > 50)
+			{
+				if([_mdelegate respondsToSelector:@selector(scrollImage:fileNext:)])
+				{
+					[_mdelegate scrollImage:self fileNext:self];
+					return;
+				}			
+			}
+		}
+	}
+	
 
 	[super mouseDragged:theEvent];
 }
