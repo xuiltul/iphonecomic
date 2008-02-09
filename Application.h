@@ -22,7 +22,7 @@
 #import "PrefsView.h"
 #import "FileList.h"
 
-#define VIEWCOUNT 4
+/* #define VIEWCOUNT 4 */
 
 @interface ExNavBar : UINavigationBar
 {
@@ -33,16 +33,16 @@
 
 @interface Application : UIApplication 
 {
-	UIView* _mainview;
-	ExNavBar* _navbar;
-	FileBrowser* _browser;
-	FileBrowser* _browser2;
-	ZipFileBrowser *_zbrowser;
-	FileBrowser* _currentBrowser;
-	UITransitionView* _transition;
-	UITransitionView* _tabletransition;
-	PrefsView *_prefsview;
-	ImageView* _imageview;
+	UIView*				_mainview;
+	ExNavBar*			_navbar;
+	FileBrowser*		_browser;
+	FileBrowser*		_browser2;
+	ZipFileBrowser*		_zbrowser;
+	FileBrowser*		_currentBrowser;
+	UITransitionView*	_transition;
+	UITransitionView*	_tabletransition;
+	PrefsView*			_prefsview;
+	ImageView*			_imageview;
 }
 
 -(void) gravity: (float)x  gy:(float) y gz:(float)z;

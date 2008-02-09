@@ -50,6 +50,14 @@
 	<string>スワイプページ送り</string>
 	<key>help</key>
 	<string>ヘルプ</string>
+	<key>Action</key>
+	<string>アクション</string>
+	<key>Start with saved position last</key>
+	<string>最後のしおりから</string>
+	<key>Fit Screen</key>
+	<string>画面サイズに最適化</string>
+	<key>Left button is next</key>
+	<string>左ボタンで次のページ</string>
 </dict>
 </plist>
 

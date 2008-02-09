@@ -33,15 +33,16 @@
 {
 	UIPreferencesTable *_prefstable;
 	UINavigationBar *_navbar;
-	UIPreferencesControlTableCell *_scrollcell;
+	UIPreferencesControlTableCell *_bouncecell;
 	UIPreferencesTextTableCell *_scrollspeedcell;
 	UIPreferencesControlTableCell *_statusbarcell;
 	UIPreferencesControlTableCell *_migicell;
 	UIPreferencesControlTableCell *_scalecell;
 //	UIPreferencesControlTableCell *_slidecell;
 	UIPreferencesTextTableCell *_buttonsizecell;
-	UIPreferencesControlTableCell *_directioncell;
-	UIPreferencesControlTableCell *_errorcell;
+	UIPreferencesControlTableCell *_leftbtncell;
+//	UIPreferencesControlTableCell *_errorcell;
+	UIPreferencesControlTableCell *_fitscrcell;
 
 	UIPreferencesControlTableCell *_gravitycell;
 	UIPreferencesControlTableCell *_buttoncell;
