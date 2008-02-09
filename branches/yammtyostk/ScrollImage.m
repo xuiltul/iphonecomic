@@ -3,33 +3,38 @@
 #import "Global.h"
 
 float kMinScale = (0.1f);
-#define kMaxScale (2.0f)
-int SCHEIGHT = 460;
-struct CGRect screct;
+#define MAX_SCALE (2.0f)
+
+#define NEXT_PAGE 1
+#define PREV_PAGE 2
+#define EXIT_PAGE 3
+
+struct CGRect screct;		//フルスクリーンの始点とサイズを保持
+int img_width=0, img_height=0;
 
 @implementation ScrollImage
-- (id)initWithFrame:(struct CGRect)frame{
+- (id)initWithFrame:(struct CGRect)frame
+{
+	//フルスクリーンの始点とサイズを取得する
 	screct = [UIHardware fullScreenApplicationContentRect];
-	screct.origin.x = screct.origin.y = 0;
-	if(prefsData.HideStatusbar)
-		screct.size.height = 480;
-	else
-		screct.size.height = 460;
-		
-	SCHEIGHT = screct.size.height;
-	
+	screct.origin = CGPointZero;
+	//ステータスバーを出す場合
+//	if(!prefData.HideStatusbar)	screct.size.height -= SCSTSBAR;
+
 	[super initWithFrame: frame];
-	_fCurrentPercent = 1.0f;
-	_currentimage = nil;
+	_fCurrentPercent = 1.0f;		//ズーム倍率
+	_currentimage = nil;			//イメージなし
 	_mdelegate = nil;
 	_imageview = [[UIImageView alloc] initWithFrame:frame];
 	[self addSubview: _imageview];
-	_centerpoint = CGPointMake(320 / 2, SCHEIGHT / 2);
-	_isVertical = true;
-	_matrixprev =	CGAffineTransformRotate(CGAffineTransformMakeScale(1, 1), 0  * M_PI / 180.0f);
-	_isvert = true;
-	_orient = 1;
-	
+	//中心点を画面の中心に設定
+	_centerpoint = CGPointMake(screct.size.width / 2, screct.size.height / 2);
+	_isVertical = true;				//縦位置で初期化
+	_matrixprev =	CGAffineTransformRotate(CGAffineTransformMakeScale(1, 1), 0 * M_PI / 180.0f);
+	_isvert = true;					//縦
+	_orient = 1;					//正面 0°
+	_bZooming = false;				//ズームモードを無効
+
 	[super setTapDelegate: self];
 	[super setGestureDelegate: self];
 //	NSBundle *bundle = [NSBundle mainBundle];
@@ -40,91 +45,78 @@ struct CGRect screct;
 }
 
 
+/******************************/
+/*                            */
+/******************************/
 - (void)view:(UIView *)view handleTapWithCount:(int)count event:(GSEvent *)event
 {
-	NSLog(@"%d", count);
+//	NSLog(@"%d", count);
 }
 
+/******************************/
+/* イメージを回転させる       */
+/******************************/
 -(void) setOrientation: (int) orientation animate:(bool)anime
 {
-	if(_orient == orientation) return;
-	if(orientation == 0 || orientation >= 5) return;
-	int degree = 0;
-	float tscale = 1.5f;
-	bool misvert = _isvert;
-	bool tochange = false;
-	switch(orientation)
-	{
-		case 1:
-			_isvert = true;
-			degree = 0;
-			break;
-		case 2:
-			_isvert = true;
-			degree = 180;
-			break;
-		case 3:
-			_isvert = false;
-			degree = 90;
-			break;
-		case 4:
-			_isvert = false;
-			degree = -90;
-			break;
-//		* 0 - Phone is flat (on a table?) with screen upwards
-//		* 1 - Phone is in normal position
-//		* 2 - Phone is rotated upside-down
-//		* 3 - Phone is rotated to the left
-//		* 4 - Phone is rotated to the right
-//		* 5 - Phone is changing orientation ?
-//		* 6 - Phone is flat, with screen downwards - very useful! 
-		default:
-			return;
+	float degree = 0;
+	float tscale = 1.0f;
+	float movex = 0.0f;
+	float movey = 0.0f;
+	bool misvert = _isvert;		//現在の角度を保存する
+
+	//回転角度が変わらない場合や、値が不正(1～4以外)は何もせず終了
+	if( (_orient == orientation) || (orientation == 0) || (orientation >= 5) ) return;
+	//次の角度を設定する
+	switch(orientation){
+	case 1:		//正面 0°
+		_isvert = true;
+		degree = 0 * M_PI / 180.0f;
+		movex = 0.0;
+		movey = 0.0;
+		break;
+	case 2:		//180°
+		_isvert = true;
+		degree = 180 * M_PI / 180.0f;
+		movex = 0.0;
+		movey = 0.0;
+		break;
+	case 3:		//左 90°
+		_isvert = false;
+		degree = 90 * M_PI / 180.0f;
+		movex = 0.0;
+		movey = screct.size.width / 2;
+		break;
+	case 4:		//右 270°
+		_isvert = false;
+		degree = -90 * M_PI / 180.0f;
+		movex = 0.0;
+		movey = screct.size.width / 2;
+		break;
+	default:
+		return;
 	}
+	//新しい角度を保持
 	_orient = orientation;
-
 	//前と縦横が違うなら、切り替える
-	tochange = (misvert != _isvert);
-
-	CGAffineTransform matrix;
-	 
-	if(tochange)
-	{
-		//前が横向き、今は縦
-		if(_isvert == true)
-		{
-			matrix = CGAffineTransformTranslate(
-			CGAffineTransformRotate(CGAffineTransformMakeScale(1, 1), degree  * M_PI / 180.0f), 0, 0);
-		}
-		else
-		{
-			matrix = CGAffineTransformTranslate(
-			CGAffineTransformRotate(CGAffineTransformMakeScale(1.4375f, 1.4375f), degree  * M_PI / 180.0f), 0, 0);
-		}
+	if( (misvert != _isvert) && (_isvert == false) ){
+		tscale = 1.4375f;
 	}
-	else
-	{
-		matrix = CGAffineTransformTranslate(
-		CGAffineTransformRotate(CGAffineTransformMakeScale(1, 1), degree  * M_PI / 180.0f), 0, 0);
-	}
-	//CGAffineTransformRotate(CGAffineTransformTranslation(0, 0), degree  * M_PI / 180.0f);
+	//アニメーションの設定（アフィン変化マトリックス??）
+	CGAffineTransform matrix = CGAffineTransformTranslate(
+			CGAffineTransformRotate(CGAffineTransformMakeScale(tscale, tscale), degree), movex, movey );
 	UITransformAnimation *scaleAnim = [[UITransformAnimation alloc] initWithTarget: _imageview];
 	[scaleAnim setStartTransform: _matrixprev];
 	[scaleAnim setEndTransform: matrix];
 	UIAnimator *anim = [[UIAnimator alloc] init];
-	
-	if(anime)
-	{
+	//アニメーション
+	if(anime)	//する
 		[anim addAnimation:scaleAnim withDuration:0.50f start:YES]; 
-	}
-	else
-	{
+	else		//しない
 		[anim addAnimation:scaleAnim withDuration:0.01f start:YES]; 
-	}
+	//現在のアニメーション情報を保存する
 	_matrixprev = matrix;
 	//[self fitRect];
 	[NSTimer scheduledTimerWithTimeInterval: 0.51f target: self selector:@selector(add:) userInfo:self repeats:NO];
-
 }
 
 -(void) add: (NSTimer*) timer
@@ -132,96 +124,250 @@ struct CGRect screct;
 	ScrollImage * view = [timer userInfo];
 	//[view fitRect];
 	[self fitRect];
+	[self resizeImage];			//リサイズする
+	[self scrollToTopRight];		//右上に移動
 }
 
+/******************************/
+/* 画面サイズに合わせる       */
+/******************************/
 - (void) fitRect
 {
-	float w = screct.size.width, h = screct.size.height;// if(_isvert == false){w = 480;h = 320;}
 	CGSize imageRect = _imagesize;
-	CGRect imageViewRect = CGRectMake(0, 0, w, h);
-	if(_isvert)
-	{
-		//	NSLog(@"%f %f, %f", _fCurrentPercent, imageRect.width, imageRect.height);
-		//Create viewing rectangle for image that centers the image, and contracts it if needed
-		if (imageRect.width >= imageViewRect.size.width || imageRect.height >= imageViewRect.size.height)
-		{
-			float imageAspect = imageRect.width / imageRect.height;
 
-			if(imageRect.height > imageRect.width)
-			{
-				imageViewRect.size.height = h;
-				imageViewRect.size.width = imageViewRect.size.height * imageAspect;
-				_fCurrentPercent = (imageViewRect.size.width / imageRect.width);
+char tmp[256];
+sprintf(tmp,"fitRect img width=%f,height=%f\n",imageRect.width,imageRect.height);
+debug_log(tmp);
+
+	if( (imageRect.width == 0) || (imageRect.height == 0) ) return;
+
+	if( prefData.ToFitScreen == YES){
+		switch(_orient){
+		case 1:		//正面 0°
+		case 2:		//180°
+
+sprintf(tmp,"fit 1 or 2\n");
+debug_log(tmp);
+
+			//イメージが横長の場合、イメージの縦を合わせる
+			if( imageRect.width > imageRect.height ){
+
+sprintf(tmp,"fit yoko\n");
+debug_log(tmp);
+
+				img_height = screct.size.height;
+				img_width = (int)(imageRect.width * screct.size.height / imageRect.height);
 			}
-			else
-			{
-				imageViewRect.size.width = w;
-				imageViewRect.size.height = imageViewRect.size.width / imageAspect;
-				_fCurrentPercent = (imageViewRect.size.height / imageRect.height);					
+			//イメージが縦長の場合、画面一杯に合わせる
+			else{
+
+sprintf(tmp,"fit tate\n");
+debug_log(tmp);
+
+				float zoomRate;
+				float tmpZoomH = screct.size.height / imageRect.height;
+				float tmpZoomW = screct.size.width / imageRect.width;
+				//比率を見て、画面に近い場合は、一杯に引き伸ばす
+				if( (float)fabs(tmpZoomH-tmpZoomW) < (float)0.05){
+
+sprintf(tmp,"fit fit\n");
+debug_log(tmp);
+
+					img_height = screct.size.height;
+					img_width = screct.size.width;
+				}
+				else{
+
+sprintf(tmp,"fit fit out\n");
+debug_log(tmp);
+
+					//ちょっと画面サイズから外れる場合は、長辺を合わせる
+					if(tmpZoomH > tmpZoomW)
+						zoomRate = tmpZoomW;
+					else
+						zoomRate = tmpZoomH;
+					img_height = (int)(imageRect.height * zoomRate);
+					img_width = (int)(imageRect.width * zoomRate);
+				}
 			}
+			break;
+		case 3:		//左 90°
+		case 4:		//右 270°
+
+sprintf(tmp,"fit 3 or 4\n");
+debug_log(tmp);
+
+			//イメージが横長の場合、イメージの横半分を丁度にする
+			if( imageRect.width > imageRect.height ){
+
+sprintf(tmp,"fit yoko\n");
+debug_log(tmp);
+
+				img_width = screct.size.height*2;
+				img_height = (int)((imageRect.height * screct.size.height * 2) / imageRect.width);
+			}
+			//イメージが縦長の場合、イメージの横を合わせる
+			else{
+
+sprintf(tmp,"fit tate\n");
+debug_log(tmp);
+
+				img_width = screct.size.height;
+				img_height = (int)((imageRect.height * screct.size.height) / imageRect.width);
+			}
+			break;
 		}
-		[_imageview setFrame: CGRectMake(0, 0, imageRect.width, imageRect.height)];
 	}
-	else
-	{
-		_fCurrentPercent = (screct.size.height / imageRect.width);
-		//_fCurrentPercent = (320 / imageRect.height);
-	}
-	
-	kMinScale = _fCurrentPercent;
+	else{
+		float zoomRate, tmpZoomH, tmpZoomW;
+		switch(_orient){
+		case 1:		//正面 0°
+		case 2:		//180°
 
-	_fCurrentPercent *= 1.001f;
-	
-	/*imageRect.origin.x = imageViewRect.origin.x + 
-	imageViewRect.size.width * 0.5f - imageRect.size.width * 0.5f;
-	imageRect.origin.y = imageViewRect.origin.y + 
-	imageViewRect.size.height * 0.5f - imageRect.size.height * 0.5f;*/
-	
-	//Set the image viewing frame
-	[self resizeImage];
-	[self scrollToTopRight];
+sprintf(tmp,"fit 1 or 2\n");
+debug_log(tmp);
+
+			tmpZoomH = screct.size.height / imageRect.height;
+			tmpZoomW = screct.size.width / imageRect.width;
+			break;
+		case 3:		//左 90°
+		case 4:		//右 270°
+
+sprintf(tmp,"fit 3 or 4\n");
+debug_log(tmp);
+
+			if( imageRect.height > imageRect.width ){
+				tmpZoomW = tmpZoomH = screct.size.height / imageRect.width;
+			}
+			else{
+				tmpZoomH = screct.size.height / imageRect.width;
+				tmpZoomW = screct.size.width / imageRect.height;
+			}
+			break;
+		}
+		if(tmpZoomH > tmpZoomW)
+			zoomRate = tmpZoomW;
+		else
+			zoomRate = tmpZoomH;
+		img_height = (int)(imageRect.height * zoomRate);
+		img_width = (int)(imageRect.width * zoomRate);
+	}
+	//拡大率を指定する場合
+	if( (prefData.ToKeepScale == YES) && (_fCurrentPercent > 0) ){
+		img_width *= _fCurrentPercent;
+		img_height *= _fCurrentPercent;
+	}
+	kMinScale = screct.size.height/img_height;
+
+sprintf(tmp,"fitRect end img_width=%d,height=%d,kMinScale=%f\n",img_width,img_height,kMinScale);
+debug_log(tmp);
 }
 
+#if 0
+/******************************/
+/* 画面サイズに合わせる       */
+/******************************/
+- (void) fitRect
+{
+	CGSize imageRect = _imagesize;
+	// イメージ表示の矩形を画面の大きさに設定する
+	//	CGRect imageViewRect = CGRectMake(0, 0, screct.size.width, screct.size.height);
+
+	if((imageRect.width == 0)||(imageRect.height == 0))		return;
+
+	//画面サイズに合わせズーム倍率を設定する
+	//縦の場合
+	if(_isvert){
+		//イメージが横長の場合、イメージの縦を合わせる
+		if( imageRect.width > imageRect.height ){
+			_fCurrentPercent = screct.size.height / imageRect.height;
+		}
+		//イメージが縦長の場合、画面一杯に合わせる
+		else{
+			float tmpPerH = screct.size.height / imageRect.height;
+			float tmpPerW = screct.size.width / imageRect.width;
+			if(tmpPerH > tmpPerW)
+				_fCurrentPercent = tmpPerW;
+			else
+				_fCurrentPercent = tmpPerH;
+		}
+	}
+	//横の場合
+	else{
+		//イメージが横長の場合、イメージの横半分位を丁度にする
+		if( imageRect.width > imageRect.height ){
+			_fCurrentPercent = (screct.size.height / imageRect.width) * 2.0;
+		}
+		//イメージが縦長の場合、イメージの横を合わせる
+		else{
+			_fCurrentPercent = screct.size.height / imageRect.width;
+		}
+	}
+
+	kMinScale = _fCurrentPercent;
+//	[self resizeImage];			//リサイズする
+//	[self scrollToTopRight];	//右上に移動
+}
+#endif
+
+/******************************/
+/*                            */
+/******************************/
 - (void) dealloc
 {
 	[_imageview release];
 	[_currentimage release];
-//	UIImage* _ileft, *_iright, *_ihome;
 }
 
+/******************************/
+/* 画面のリサイズ             */
+/******************************/
 - (void) resizeImage
 {
-	float w = 320, h = SCHEIGHT; //if(_isvert == false){w = 480;h = 320;}
-	CGRect mframe = [_imageview frame];
-	float isw = _imagesize.width, ish = _imagesize.height;
-	if(_isvert == false) {  isw = _imagesize.height; ish = _imagesize.width; }
-	CGRect frame = CGRectMake(0, 0, isw * _fCurrentPercent, ish * _fCurrentPercent);
-/*	CGRect imageViewRect = CGRectMake(0, 0, 320, 480 - 48 * 1.5);
-	frame.origin.x = imageViewRect.origin.x + 
-	imageViewRect.size.width * 0.5f - frame.size.width * 0.5f;
-	frame.origin.y = imageViewRect.origin.y + 
-	imageViewRect.size.height * 0.5f - frame.size.height * 0.5f;*/
-	
-	[_imageview setFrame: frame];
-	[self setContentSize: frame.size];
-	
-	if(_isvert == true)
-	{
-		[self setOffset: CGPointMake(frame.size.width * _centerpoint.x / w - _centerpoint.x,
-		frame.size.height * _centerpoint.y / h - _centerpoint.y + 11)];
-	}
-	
-	//NSLog(@"%f %f", frame.size.width * _centerpoint.x / w - _centerpoint.x, frame.size.height * _centerpoint.y / 480.0f - _centerpoint.y);
-	//[self scrollRectToVisible: CGRectMake(frame.size.width * _centerpoint.x / 320.0f - _centerpoint.x,
-	// frame.size.height * _centerpoint.y / 480.0f - _centerpoint.y, 320, 480) animated:NO];
-	//[self scrollByDelta: CGSizeMake(frame.size.width - mframe.size.width, frame.size.height - mframe.size.height)];
-}
+char tmp[256];
+sprintf(tmp,"resizeImage img_width=%d,img_height=%d\n",img_width,img_height);
+debug_log(tmp);
 
-- (void) setMouseDelegate: (id) del
+	float isw = (_isvert?	img_width:	img_height);
+	float ish = (_isvert?	img_height:	img_width);
+
+	CGRect frame = CGRectMake(0, 0, isw, ish);
+	[_imageview setFrame: frame];			//サイズを変更する
+	[self setContentSize: frame.size];		//画面表示用イメージオブジェクトのサイズを保存
+}
+#if 0
+/******************************/
+/* 画面のリサイズ             */
+/******************************/
+- (void) resizeImage
 {
-	_mdelegate = del;
-}
+	float isw, ish;
 
+	//縦の場合は、イメージの縦横をそのまま設定
+	if(_isvert){
+		isw = _imagesize.width;
+		ish = _imagesize.height;
+	}
+	//横の場合は、縦横を変換する
+	else{
+		isw = _imagesize.height;
+		ish = _imagesize.width;
+	}
+	//画面表示用イメージオブジェクトのサイズをイメージ×ズーム倍率で設定する
+	CGRect frame = CGRectMake(0, 0, isw * _fCurrentPercent, ish * _fCurrentPercent);
+	[_imageview setFrame: frame];			//サイズを変更する
+	[self setContentSize: frame.size];		//画面表示用イメージオブジェクトのサイズを保存
+
+/*	if(_isvert == true){
+		[self setOffset: CGPointMake(frame.size.width * _centerpoint.x / screct.size.width - _centerpoint.x,
+			frame.size.height * _centerpoint.y / screct.size.height - _centerpoint.y + 11)];
+	}*/
+}
+#endif
+
+/******************************/
+/*                            */
+/******************************/
 - (void) setPercent : (float)percent
 {
 	_fCurrentPercent = percent;
@@ -229,317 +375,298 @@ struct CGRect screct;
 	//[self setOffset: CGPointMake(0,0)];
 }
 
-
+/******************************/
+/* イメージを設定する         */
+/******************************/
 - (int) setImage : (NSData*) data
 {
 	UIImage *image = [[UIImage alloc] initWithData: data cache: true];
+	//イメージのサイズを取得する
 	CGSize frame = [image size];
 	int ret = 0;
-	if(frame.width > 1390 || frame.height > 1390)
-	{
+	if(frame.width > 1390 || frame.height > 1390){
 		ret = 1;
 	}
+	//
 	[self setImageFromImage: image];
+
 	return ret;
 }
 
+/******************************/
+/* イメージを保存する         */
+/******************************/
 - (void) setImageFromImage : (UIImage *)image withFlag:(BOOL)flag;
 {
 	UIImage *maeimage = _currentimage;
 	BOOL mflag = _maeFlag;
 	_maeFlag = flag;
-	
-	
-	//imageviewを作り直してみる
-	/*[_imageview removeFromSuperview];
-	[_imageview release];
-	_imageview = [[UIImageView alloc] initWithFrame:screct];
-	
-	UITransformAnimation *scaleAnim = [[UITransformAnimation alloc] initWithTarget: _imageview];
-	[scaleAnim setStartTransform: CGAffineTransformMakeScale(1, 1)];
-	[scaleAnim setEndTransform: _matrixprev];
-	UIAnimator *anim = [[UIAnimator alloc] init];
-	[anim addAnimation:scaleAnim withDuration:0 start:YES]; */
-	[self addSubview: _imageview];
 
 	//イメージを保存
-	_currentimage = image;
-	_imagesize = [_currentimage size];
-	[image setOrientation: 0];
-	[_imageview setImage: _currentimage];
+	_currentimage = image;					//イメージのオブジェクトを保存
+	_imagesize = [_currentimage size];		//イメージのサイズを保存
+	[image setOrientation: 0];				//イメージの回転方向を0
+	[_imageview setImage: _currentimage];	//イメージを表示イメージに設定
+	[self setContentSize: _imagesize];		
 
-	[self setContentSize: _imagesize];
-
-	if(maeimage != nil)
-	{
+	if(maeimage != nil){
 		if(mflag) CGImageRelease([maeimage imageRef]);
 		[maeimage release];
 	}
 }
 
+/******************************/
+/* イメージを右上に移動する   */
+/******************************/
 - (void) scrollToTopRight
-{	
-	CGRect frame = CGRectMake(0, 0, _imagesize.width * _fCurrentPercent, _imagesize.height * _fCurrentPercent);
-	if(_orient == 1 || _orient == 2)
-	{
-		[self scrollRectToVisible: CGRectMake(frame.size.width - 1, 0, 1, 1)];
-	}
-	else
-	{
-		if(_orient == 3)
-			[self scrollRectToVisible: CGRectMake(frame.size.height - 1, 0, 1, 1)];
-		else
-			[self setOffset: CGPointMake(0,0)];
-			
+{
+char tmp[256];
+sprintf(tmp,"scrollToTopRight img_width=%d,img_height=%d,_fCurrentPercent=%f,_orient=%d\n"
+,img_width,img_height,_fCurrentPercent,_orient);
+debug_log(tmp);
+
+	//イメージのサイズにズーム倍率をかけて、イメージをスクロールする
+	switch(_orient){
+	case 1:		//正面 0°
+//		isw = img_width;
+//		ish = img_height;
+
+		[self scrollRectToVisible: CGRectMake( img_width * _fCurrentPercent, 0, 1, 1)];
+//		[self scrollRectToVisible: CGRectMake( _imagesize.width * _fCurrentPercent, 0, 1, 1)];
+		break;
+	case 2:		//180°
+		[self setOffset: CGPointMake(0,0)];
+		break;
+	case 3:		//左 90°
+		[self scrollRectToVisible: CGRectMake( img_height * _fCurrentPercent
+												, img_width * _fCurrentPercent, 1, 1)];
+//		[self scrollRectToVisible: CGRectMake( _imagesize.height * _fCurrentPercent
+//												, _imagesize.width * _fCurrentPercent, 1, 1)];
+		break;
+	case 4:		//右 270°
+	default:
+		[self setOffset: CGPointMake(0,0)];
+		break;
 	}
 }
 
-CGPoint mPoint;
-
+/******************************/
+/* ズーム倍率を返す           */
+/******************************/
 - (float) getPercent
 {
 	return _fCurrentPercent;
 }
 
+//******************************
+//* 画面をタッチした時の動作   *
+//******************************
 - (void)mouseDown:(GSEventRef)theEvent
 {
-	mPoint.x = -1;
-	float hit = prefsData.HitRange;
-	int w = 320, h = SCHEIGHT;// if(_isVertical == false){w = 480;h = 320;}
+	// DOWNイベントの座標を取得する
+	_cgpDown = GSEventGetLocationInWindow(theEvent);
 
-	CGPoint r = GSEventGetLocationInWindow(theEvent);
-	
-	int lt = r.x < hit && r.y < hit;
-	int lb = r.x < hit && r.y > h - hit;
-	int rt = r.x > w - hit && r.y < hit;
-	int rb = r.x > w - hit && r.y > h - hit;
-	
-	int hlt, hlb, hrt, hrb;
-	switch(_orient)
-	{
-		case 1:
-			hlt = lt;
-			hlb = lb;
-			hrt = rt;
-			hrb = rb;
-			break;
-		case 2:
-			hlt = rb;
-			hlb = rt;
-			hrt = lb;
-			hrb = lt;
-			break;
-		case 3:
-			hlt = rt;
-			hlb = lt;
-			hrt = rb;
-			hrb = lb;
-			break;
-		case 4:
-			hlt = lb;
-			hlb = rb;
-			hrt = lt;
-			hrb = rt;
-			break;
-	}
-	
-	if(!prefsData.SlideDirection)
-	{
-//		int temp = hlt;
-//		hlt = hrt;
-//		hrt = temp;
-		int temp = hlb;
-		hlb = hrb;
-		hrb = temp;
-	}
-	
-	//ボタンページめくりがなくて、かつ他のがある
-	if(prefsData.ButtonSlide == 0 && 
-		(prefsData.SwipeSlide != 0 || prefsData.GravitySlide != 0))
-	{
-		hlb = hrb = 0;
-	}
-
-	//左上
-	if(hlt) 
-	{
-		if([_mdelegate respondsToSelector:@selector(scrollImage:fileEnd:)])
-		{
-			[_mdelegate scrollImage:self fileEnd:self];
-			return;
-		}	
-	}
-	
-	//左下
-	if(hlb)
-	{
-		if([_mdelegate respondsToSelector:@selector(scrollImage:filePrev:)])
-		{
-			[_mdelegate scrollImage:self filePrev:self];
-			return;
-		}
-	}
-	
-	//右下
-	if(hrb)
-	{
-		if([_mdelegate respondsToSelector:@selector(scrollImage:fileNext:)])
-		{
-			[_mdelegate scrollImage:self fileNext:self];
-			return;
-		}
-	}
-
-
-
-
-	bool isChording = GSEventIsChordingHandEvent(theEvent);	
-	int count = GSEventGetClickCount(theEvent);
-	if (isChording)
-	{	
+//	int count = GSEventGetClickCount(theEvent);
+	// 2本指でタッチ（ 0 = one finger down、1 = two fingers down ）
+	if( GSEventIsChordingHandEvent(theEvent) ){
+		// タッチしている2つの座標を取得する。pt1、pt2
 		CGPoint pt1 = GSEventGetInnerMostPathPosition(theEvent);
 		CGPoint pt2 = GSEventGetOuterMostPathPosition(theEvent);
-		_fDistanceStart = sqrt((pt2.x-pt1.x)*(pt2.x-pt1.x) + (pt2.y - pt1.y) * (pt2.y - pt1.y));
-		_fDistancePrev = _fDistanceStart;
+		_fDistancePrev = sqrt((pt2.x-pt1.x)*(pt2.x-pt1.x) + (pt2.y - pt1.y) * (pt2.y - pt1.y));
+		// 2本指の中心点を中心点に設定する
 		_centerpoint = CGPointMake((pt1.x+pt2.x) / 2, (pt1.y+pt2.y) / 2);
-		if(_isvert == false && 0)
-		{
-			float t = _centerpoint.x;
-			_centerpoint.x = _centerpoint.y;
-			_centerpoint.y = t;
-		}
-		///_bZooming = true;
-	}
-	else
-	{
-		mPoint = r;
+		_bZooming = true;
 	}
 
 	[super mouseDown:theEvent];
 }
 
+//********************************
+//* 画面のタッチを離した時の動作 *
+//********************************
 - (void)mouseUp:(GSEventRef)theEvent
 {
-	_bZooming = false;
+	int next=0, lt=0, lb=0, rt=0, rb=0, hit=0;
 
+	//ズームモードが有効な場合は、画面移動は無効
+	if( _bZooming == true ){
+		_bZooming = false;
+		return;
+	}
+	// 角判定の大きさを取得
+	hit = prefData.HitRange;
+	// UPイベントの座標を取得する
+	_cgpUp = GSEventGetLocationInWindow(theEvent);
+	
+	// タッチした場所を判定する。lt=左上、lb=左下、rt=右上 rb=右下
+	if( (fabs(_cgpDown.x - _cgpUp.x) < (hit/5))&&(fabs(_cgpDown.y - _cgpUp.y) < (hit/5)) ){
+		lt = (_cgpUp.x < hit) && (_cgpUp.y < hit);
+		lb = (_cgpUp.x < hit) && (_cgpUp.y > (screct.size.height - hit));
+		rt = (_cgpUp.x > (screct.size.width - hit)) && (_cgpUp.y < hit);
+		rb = (_cgpUp.x > (screct.size.width - hit)) && (_cgpUp.y > (screct.size.height - hit));
+	}
+	// ボタン判定
+	switch(_orient){
+	case 1:		//正面 0°
+		if( lt )		next = EXIT_PAGE;
+		else if( lb )	next = (prefData.LBtnIsNext? NEXT_PAGE: PREV_PAGE);
+		else if( rb )	next = (prefData.LBtnIsNext? PREV_PAGE: NEXT_PAGE);
+		break;
+	case 2:		//180°
+		if( rb )		next = EXIT_PAGE;
+		else if( rt )	next = (prefData.LBtnIsNext? NEXT_PAGE: PREV_PAGE);
+		else if( lt )	next = (prefData.LBtnIsNext? PREV_PAGE: NEXT_PAGE);
+		break;
+	case 3:		//左 90°
+		if( rt )		next = EXIT_PAGE;
+		else if( lt )	next = (prefData.LBtnIsNext? NEXT_PAGE: PREV_PAGE);
+		else if( lb )	next = (prefData.LBtnIsNext? PREV_PAGE: NEXT_PAGE);
+		break;
+	case 4:		//右 270°
+		if( lb )		next = EXIT_PAGE;
+		else if( rb )	next = (prefData.LBtnIsNext? NEXT_PAGE: PREV_PAGE);
+		else if( rt )	next = (prefData.LBtnIsNext? PREV_PAGE: NEXT_PAGE);
+		break;
+	default:
+		break;
+	}
+	//ボタンページめくりは無効
+	if( (next!=EXIT_PAGE)&&(prefData.ButtonSlide!=YES) ) next = 0;
+
+	[self goNextPage:next];
 	[super mouseUp:theEvent];
 }
 
+/******************************/
+/*                            */
+/******************************/
 - (void) setRotate : (bool) isvertical
 {
 	_isVertical = isvertical;
-	//通常
-	if(_isVertical)
-	{
-		//_centerpoint = CGPointMake(320 / 2, 480 / 2);
-		//[self setFrame: CGRectMake(0, 0, 320, 480)];
-	}
-	else
-	{
-		//_centerpoint = CGPointMake(480 / 2, 320 / 2);
-		//[self setFrame: CGRectMake(0, 0, 480, 320)];	
-	}
 	[self fitRect];
-	
+	[self resizeImage];			//リサイズする
+	[self scrollToTopRight];		//右上に移動
 	CGRect rc = [self frame];
-/*	UIAlertSheet* alertSheet = [[UIAlertSheet alloc] initWithFrame:CGRectMake(0,240,320,240)];
-	[alertSheet setTitle: @"test"];
-	[alertSheet setBodyText:[NSString stringWithFormat: @"%f, %f  %f, %f", rc.origin.x, rc.origin.y, rc.size.width, rc.size.height]];
-	[alertSheet addButtonWithTitle: @"hoge"];
-	[alertSheet setDelegate: self];
-	[alertSheet popupAlertAnimated:YES];*/
 }
 
-- (void)alertSheet:(UIAlertSheet *)sheet buttonClicked:(int)button {
+/******************************/
+/*                            */
+/******************************/
+- (void)alertSheet:(UIAlertSheet *)sheet buttonClicked:(int)button
+{
 	[sheet dismissAnimated:YES];
 }
 
+/******************************/
+/* 画面をドラッグした時       */
+/******************************/
 - (void)mouseDragged:(GSEventRef)theEvent
 {
+	// 2本指でタッチ（ 0 = one finger down、1 = two fingers down ）
+	if ( GSEventIsChordingHandEvent(theEvent) ){
+		// タッチしている2つの座標を取得する。pt1、pt2
+		CGPoint pt1 = GSEventGetInnerMostPathPosition(theEvent);
+		CGPoint pt2 = GSEventGetOuterMostPathPosition(theEvent);
 
-	CGPoint mp = GSEventGetLocationInWindow(theEvent);
-
-//_ileft
-	if(!_bZooming)
-	{	
-//		[super mouseDragged:theEvent];
-//		 return;
-	}
-	CGPoint pt = [self offset];
-	bool isChording = GSEventIsChordingHandEvent(theEvent);	
-	if (isChording)
-	{
-		CGPoint pt1 = GSEventGetInnerMostPathPosition(theEvent), pt2 = GSEventGetOuterMostPathPosition(theEvent);
-		float fDistance = sqrt((pt2.x-pt1.x)*(pt2.x-pt1.x) + (pt2.y - pt1.y) * (pt2.y - pt1.y));
+		//2本指の距離を計算し、前回の距離との増分を出す。
+		float fDistance = sqrt( (pt2.x-pt1.x) * (pt2.x-pt1.x) + (pt2.y-pt1.y) * (pt2.y-pt1.y) );
 		float fHowFar = fDistance - _fDistancePrev;
 //		_centerpoint = CGPointMake((pt1.x+pt2.x) / 2, (pt1.y+pt2.y) / 2);
-		if(fabs(fHowFar) > 3)//( _bZooming ? 3 : 20))
-		{
+		//前回の距離との増分（絶対値）が3より大きい場合
+		if(fabs(fHowFar) > 3){
+			//ズーム倍率を今回の増分だけ増減する
 			_fCurrentPercent = _fCurrentPercent + (.004 * fHowFar); // パーセンテージをかける
-			
+			//ズームモードを有効にする
 			_bZooming = true;
 			
-			if(_fCurrentPercent <= kMinScale) _fCurrentPercent = kMinScale;
-			if(_fCurrentPercent >= kMinScale && _fCurrentPercent <= kMaxScale)
-			{
+			//画面サイズ以下になった場合は、画面サイズに設定する
+			if(_fCurrentPercent <= kMinScale){
+				_fCurrentPercent = kMinScale;
+			}
+			//ズーム倍率が範囲内の場合、リサイズを実行する
+			if( (_fCurrentPercent >= kMinScale) && (_fCurrentPercent <= MAX_SCALE) ){
+				//リサイズする
+				img_width *= _fCurrentPercent;
+				img_height *= _fCurrentPercent;
 				[self resizeImage];
 			}
+			//現在の2本指の距離を保存する
 			_fDistancePrev = fDistance;
 		}
-		
+		// ズームする場合はここで終了
 		if(_bZooming) return;
-
-	} 
-	else
-	{
-		if(mPoint.x > 0 && prefsData.SwipeSlide)
-		{
-			float fDistance = sqrt((mPoint.x-mp.x)*(mPoint.x-mp.x) + (mPoint.y - mp.y) * (mPoint.y - mp.y));
-			float farg = atan2(mPoint.y-mp.y, mPoint.x-mp.x);
-			NSLog(@"%f", farg);
-			switch(_orient)
-			{
-				case 2:
-					farg = M_PI-farg;
-					break;
-				case 3:
-					farg -= M_PI / 2;
-					break;
-				case 4:
-					farg += M_PI / 2;
-					break;					
-			}
-			if(farg <  M_PI / 10 && farg > - M_PI / 10 && fDistance > 50)
-			{
-				if([_mdelegate respondsToSelector:@selector(scrollImage:filePrev:)])
-				{
-					[_mdelegate scrollImage:self filePrev:self];
-					return;
-				}
-			}
-			
-			float minf = 0.9f;
-			float maxf = 1.1f;
-			// -9 / 10 to -11 / 10
-			if( ( ( farg < -M_PI * minf && farg > -M_PI * maxf )
-			// 9 / 10 to 11 / 10
-			 || ( farg > M_PI * minf && farg < M_PI * maxf ) )
-			 && fDistance > 50)
-			{
-				if([_mdelegate respondsToSelector:@selector(scrollImage:fileNext:)])
-				{
-					[_mdelegate scrollImage:self fileNext:self];
-					return;
-				}			
-			}
-		}
 	}
-	
-
+	//スクロールを実施する
 	[super mouseDragged:theEvent];
 }
 
+/******************************/
+/* メソッドを引き継ぐ         */
+/******************************/
+- (void) setScrollDelegate: (id) del
+{
+	_mdelegate = del;		//参照元のIDを登録する
+}
+
+/******************************/
+/* スワイプが有効かを返す     */
+/******************************/
+- (BOOL)canHandleSwipes
+{
+	return prefData.SwipeSlide;
+}
+
+/******************************/
+/* スワイプ操作               */
+/******************************/
+- (int)swipe: (int)orientation withEvent: (GSEventRef)event
+{
+	int next=0;
+	switch(_orient){
+	case 1:		//正面 0°
+		if( orientation == 8 )		next = NEXT_PAGE;
+		else if( orientation == 4 )	next = PREV_PAGE;
+		break;
+	case 2:		//180°
+		if( orientation == 4 )		next = NEXT_PAGE;
+		else if( orientation == 8 )	next = PREV_PAGE;
+		break;
+	case 3:		//左 90°
+		if( orientation == 2 )		next = NEXT_PAGE;
+		else if( orientation == 1 )	next = PREV_PAGE;
+		break;
+	case 4:		//右 270°
+		if( orientation == 1 )		next = NEXT_PAGE;
+		else if( orientation == 2 )	next = PREV_PAGE;
+		break;
+	default:
+		break;
+	}
+	[self goNextPage:next];
+	[super swipe:orientation withEvent:event];
+}
+
+/******************************/
+/* 次の画面に移動する         */
+/******************************/
+- (void) goNextPage:(int) next
+{
+	switch(next){
+	case NEXT_PAGE:
+		if([_mdelegate respondsToSelector:@selector(scrollImage:fileNext:)])
+			[_mdelegate scrollImage:self fileNext:self];
+		break;
+	case PREV_PAGE:
+		if([_mdelegate respondsToSelector:@selector(scrollImage:filePrev:)])
+			[_mdelegate scrollImage:self filePrev:self];
+		break;
+	case EXIT_PAGE:
+		if([_mdelegate respondsToSelector:@selector(scrollImage:fileEnd:)])
+			[_mdelegate scrollImage:self fileEnd:self];
+		break;
+	default:
+		break;
+	}
+}
+
 @end
-
-
-
