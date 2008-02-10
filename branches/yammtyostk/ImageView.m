@@ -1,17 +1,14 @@
 #import "ImageView.h"
-//#define MAXPATHLEN 512
 #import "Global.h"
 
-struct CGRect screct;		//フルスクリーンの始点とサイズを保持
+#define MAX_IMAGE  (1390.0f)
+#define MAX_RESIZE (1000.0f)
 
 @implementation ImageView
 - (id)initWithFrame:(struct CGRect)frame
 {
-	screct = [UIHardware fullScreenApplicationContentRect];
+	CGRect screct = [UIHardware fullScreenApplicationContentRect];
 	screct.origin = CGPointZero;
-	//ステータスバーを出す場合
-//	if(!prefData.HideStatusbar)	screct.size.height -= SCSTSBAR;
-	screct.size.width++;	//横スクロール対策
 
 	[super initWithFrame: frame];
 	_scroller1 = [[ScrollImage alloc] initWithFrame: frame];
@@ -153,7 +150,7 @@ bool flag2 = false;
 			 continue;
 		}
 		NSString *temp = [NSString stringWithCString: buf encoding:NSShiftJISStringEncoding];
-	//	NSLog(temp);
+//	NSLog(temp);
 		if(temp != nil){
 			[filenamelist addObject:temp];
 		}
@@ -223,20 +220,15 @@ bool flag2 = false;
 }
 
 /******************************/
-/*                            */
+/* ページデータの読み込み     */
 /******************************/
 -(int)reloadFile
 {
-char tmp[256];
-sprintf(tmp,"reloadFile\n");
-debug_log(tmp);
-
 	if(zipfile == 0) return -1;
-	if(_currentpos < 0 || _currentpos > [filenamelist count]) {
+	if( (_currentpos < 0) || (_currentpos > [filenamelist count]) ){
 		[self dofileEnd];
 		return -1;
 	}
-
 	char namebuf[MAXPATHLEN];
 	//現在のファイル名読み込み
 	[[filenamelist objectAtIndex: _currentpos] getCString: namebuf maxLength:MAXPATHLEN encoding:NSShiftJISStringEncoding];
@@ -245,162 +237,53 @@ debug_log(tmp);
 		//ファイル終端
 		return -1;
 	}
-	
+
 	if(zipfile == 0) return;
 	unz_file_info ufi;
 	unzGetCurrentFileInfo(zipfile, &ufi, 0, 0, 0, 0, 0, 0);
 	//2MB以上はあきらめる
 	if(ufi.uncompressed_size > 1024 * 1024 * 2) return;
 
-	char *buf = (char*)malloc(ufi.uncompressed_size + 128);
+	char* buf = (char*)malloc(ufi.uncompressed_size + 128);
 	unzOpenCurrentFile(zipfile);
 	int read = unzReadCurrentFile(zipfile, buf, ufi.uncompressed_size);
 	unzCloseCurrentFile(zipfile);
 
 	int Flag = 0;
 	///ファイルの解凍までは完全にできてるっぽい
-	UIImage * nimage = [[UIImage alloc] initWithData: [NSData dataWithBytes:buf length:read] cache: true];
+	UIImage* nimage = [[UIImage alloc] initWithData: [NSData dataWithBytes:buf length:read] cache: true];
 	if(nimage == nil){
 		NSLog(@"nil image!");
 		return 1;
 	}
-	
-//	//resizeする？
-//	toResize = false;
+
 	CGSize loadimage = [nimage size];
-//	NSLog(@"%x  %f,%f", nimage, loadimage.width, loadimage.height);
+	CGSize resize = CGSizeZero;
 
-	CGSize resize;
-//	int width=0, height=0;
-	if( prefData.ToFitScreen == YES){
-		switch(_orient){
-		case 1:		//正面 0°
-		case 2:		//180°
-
-sprintf(tmp,"1 or 2\n");
-debug_log(tmp);
-
-			//イメージが横長の場合、イメージの縦を合わせる
-			if( loadimage.width > loadimage.height ){
-				resize.height = screct.size.height;
-				resize.width = loadimage.width * screct.size.height / loadimage.height;
-
-sprintf(tmp,"img yoko\n");
-debug_log(tmp);
-
-			}
-			//イメージが縦長の場合、画面一杯に合わせる
-			else{
-
-sprintf(tmp,"img Tate\n");
-debug_log(tmp);
-
-				float zoomRate;
-				float tmpZoomH = screct.size.height / loadimage.height;
-				float tmpZoomW = screct.size.width / loadimage.width;
-				//比率を見て、画面に近い場合は、一杯に引き伸ばす
-				if( (float)fabs(tmpZoomH-tmpZoomW) < (float)0.05){
-
-sprintf(tmp,"fit\n");
-debug_log(tmp);
-
-					resize.height = screct.size.height;
-					resize.width = screct.size.width;
-				}
-				else{
-
-sprintf(tmp,"fit out\n");
-debug_log(tmp);
-
-					//ちょっと画面サイズから外れる場合は、長辺を合わせる
-					if(tmpZoomH > tmpZoomW)
-						zoomRate = tmpZoomW;
-					else
-						zoomRate = tmpZoomH;
-					resize.height = loadimage.height * zoomRate;
-					resize.width = loadimage.width * zoomRate;
-				}
-			}
-			break;
-		case 3:		//左 90°
-		case 4:		//右 270°
-
-sprintf(tmp,"3 or 4\n");
-debug_log(tmp);
-
-			//イメージが横長の場合、イメージの横半分を丁度にする
-			if( loadimage.width > loadimage.height ){
-
-sprintf(tmp,"yoko hanbun\n");
-debug_log(tmp);
-
-				resize.width = screct.size.height*2;
-				resize.height = (loadimage.height * screct.size.height * 2) / loadimage.width;
-			}
-			//イメージが縦長の場合、イメージの横を合わせる
-			else{
-
-sprintf(tmp,"tate haba awase\n");
-debug_log(tmp);
-
-				resize.width = screct.size.height;
-				resize.height = (loadimage.height * screct.size.height) / loadimage.width;
-			}
-			break;
-		}
-
-sprintf(tmp,"resize w=%f,h=%f\n",resize.width,resize.height);
-debug_log(tmp);
+	//画面サイズに最適化
+	if( prefData.ToFitScreen ){
+		CGSize resizefit = [_currentscroll calcFitImage:loadimage];
 
 		//拡大率を指定する場合
 		if( (prefData.ToKeepScale == YES) && (_currentsize > 0) ){
-
-sprintf(tmp,"keep scale %f\n", _currentsize);
-debug_log(tmp);
-
-			resize.width *= _currentsize;
-			resize.height *= _currentsize;
+			resizefit.width *= _currentsize;
+			resizefit.height *= _currentsize;
+			resize = [self resizeMaxImage: resizefit: true];
 		}
 		else{
 			_currentsize = 1;
 		}
 	}
 	else{
-
-sprintf(tmp,"img size\n");
-debug_log(tmp);
-
-//		float aspectr = (loadimage.width / loadimage.height) / (_imagesize.width / _imagesize.height);
-//		float wr = loadimage.width / _imagesize.width;
-//		float hr = loadimage.height / _imagesize.height;
-//		if(aspectr < 0.95 || aspectr > 1.05 || 
-//		wr < 0.95 || wr > 1.05 || 
-//		hr < 0.95 || hr > 1.05) toResize = true;
-//		_imagesize = loadimage;
-//		
-		//画像が大きすぎるときの処理
-		int ret = 0;
-		if(loadimage.width > 1390.0f || loadimage.height > 1390.0f){
-//			int width = loadimage.width, height = loadimage.height;
-			resize = loadimage;
-			float aspect = resize.width / resize.height;
-			if(resize.width > resize.height){
-				resize.width = 1000;
-				resize.height = resize.width / aspect;
-			}
-			else{
-				resize.height = 1000;
-				resize.width = resize.height * aspect;
-			}
-		}
+		//画像が大きすぎる場合
+		resize = [self resizeMaxImage: loadimage: false];
 	}
 
-	if((resize.width > 0)&&(resize.height > 0)){
-		resize.width = (int)resize.width;
-		resize.height = (int)resize.height;
-
-sprintf(tmp,"resize!! w=%f, h=%f\n",resize.width,resize.height);
-debug_log(tmp);
+	//リサイズする
+	if( (resize.width > 0) && (resize.height > 0) ){
+		//端数を切り捨てる
+		resize.width = (int)resize.width;	
+		resize.height = (int)resize.height;	
 
 		unsigned char *bitmap = malloc(resize.width * resize.height * sizeof(unsigned char) * 4);
 		CGContextRef bitmapContext;
@@ -417,16 +300,16 @@ debug_log(tmp);
 		CGContextRelease(bitmapContext);
 		Flag = 1;
 	}
-	[_currentscroll setImageFromImage: nimage withFlag:Flag];
-	
-	free(buf);
 
-sprintf(tmp,"reloadFile end resize w=%f,h=%f,_currentsize=%f\n",resize.width,resize.height,_currentsize);
-debug_log(tmp);
+	[_currentscroll setImageFromImage: nimage withFlag:Flag];
+	free(buf);
 
 	return 0;
 }
 
+/******************************/
+/* 画面に合わせる             */
+/******************************/
 - (void) fitImage
 {
 	[_currentscroll fitRect];
@@ -436,21 +319,22 @@ debug_log(tmp);
 
 BOOL isDoing = NO;
 
+/******************************/
+/* 前のページに移動           */
+/******************************/
 - (void)scrollImage: (ScrollImage *)scroll filePrev: (id) hoge
 {
 	if(isDoing) return;
 
-char tmp[256];
-sprintf(tmp,"scrollImage filePrev _currentsize=%f\n",_currentsize);
-debug_log(tmp);
-
 	isDoing = YES;
 	CGPoint pt = [_currentscroll offset];
 	_currentsize = [_currentscroll getPercent];
+
 	if(_currentscroll == _scroller1)
 		_currentscroll = _scroller2;
 	else
 		_currentscroll = _scroller1;
+
 	int trans = 0;
 	switch(_orient){
 	case 1:		//正面 0°
@@ -477,41 +361,38 @@ debug_log(tmp);
 	[_transition transition:trans toView:_currentscroll];
 
 	[self prevFile];	//前のページを読み込む
-//	if(prefData.ToKeepScale  && toResize == false){
-	if(prefData.ToKeepScale){
+
+	if(prefData.ToKeepScale)
 		 [_currentscroll setPercent: _currentsize];
-	}
-//	else {
-		[_currentscroll fitRect];
-		[_currentscroll resizeImage];			//リサイズする
-//		[_currentscroll scrollToTopRight];		//右上に移動
-//		NSLog(@"fitRect");
-//	}
-	
-	if(prefData.ToScrollRightTop){
+
+	[_currentscroll fitRect];
+	[_currentscroll resizeImage];
+
+	if(prefData.ToScrollRightTop)
 		[_currentscroll scrollToTopRight];
-	}
-	else{
+	else
 		[_currentscroll setOffset:pt];
-	}
+
 	isDoing = NO;
 	return;
 }
 
+/******************************/
+/* 次のページに移動           */
+/******************************/
 - (void)scrollImage: (ScrollImage *)scroll fileNext: (id) hoge
 {
-
-char tmp[256];
-sprintf(tmp,"scrollImage fileNext _currentsize=%f\n",_currentsize);
-debug_log(tmp);
-
 	if(isDoing) return;
+
 	isDoing = YES;
 	CGPoint pt = [_currentscroll offset];
-
 	_currentsize = [_currentscroll getPercent];
 
-	if(_currentscroll == _scroller1) _currentscroll = _scroller2; else _currentscroll = _scroller1;
+	if(_currentscroll == _scroller1)
+		_currentscroll = _scroller2;
+	else
+		_currentscroll = _scroller1;
+
 	int trans = 0;
 	switch(_orient){
 	case 1:		//正面 0°
@@ -536,43 +417,44 @@ debug_log(tmp);
 		break;
 	}
 	[_transition transition:trans toView:_currentscroll];
-	
-	[self nextFile];	//次のページを読み込む
-//	if(prefData.ToKeepScale && toResize == false){
-	if(prefData.ToKeepScale){
-		[_currentscroll setPercent: _currentsize];
-	}
-//	else{
-		[_currentscroll fitRect];
-		[_currentscroll resizeImage];			//リサイズする
-//		[_currentscroll scrollToTopRight];		//右上に移動
-//	}
-	if(prefData.ToScrollRightTop){
-		[_currentscroll scrollToTopRight];
-	}
-	else{
-		[_currentscroll setOffset:pt];
-	}
-	isDoing = NO;
 
+	[self nextFile];	//次のページを読み込む
+
+	if(prefData.ToKeepScale)
+		[_currentscroll setPercent: _currentsize];
+
+	[_currentscroll fitRect];
+	[_currentscroll resizeImage];
+
+	if(prefData.ToScrollRightTop)
+		[_currentscroll scrollToTopRight];
+	else
+		[_currentscroll setOffset:pt];
+
+	isDoing = NO;
 	return;
 }
 
+/******************************/
+/*                            */
+/******************************/
 -(void) setOrientation: (int) orientation
 {
-	if(orientation >= 1 && orientation <= 4) _orient = orientation;
-	if(_currentscroll == _scroller1)
-	{
+	if( (1 <= orientation) && (orientation <= 4) )
+		_orient = orientation;
+	if(_currentscroll == _scroller1){
 		[_scroller1 setOrientation: orientation animate:true];
 		[_scroller2 setOrientation: orientation animate:false];
 	}
-	else
-	{
+	else{
 		[_scroller1 setOrientation: orientation animate:false];
 		[_scroller2 setOrientation: orientation animate:true];
 	}
 }
 
+/******************************/
+/*                            */
+/******************************/
 - (void)dofileEnd
 {
 	if([_fileDelegate respondsToSelector:@selector(imageView:fileEnd:)]){
@@ -597,5 +479,28 @@ debug_log(tmp);
 	_fileDelegate = dele;
 }
 
+/******************************/
+/*                            */
+/******************************/
+-(CGSize) resizeMaxImage: (CGSize) image: (bool) flag
+{
+	CGSize rImage = CGSizeZero;
+
+	if( (image.width > MAX_IMAGE) || (image.height > MAX_IMAGE) ){
+		float aspect = image.width / image.height;
+		if(image.width > image.height){
+			rImage.width = MAX_RESIZE;
+			rImage.height = MAX_RESIZE / aspect;
+		}
+		else{
+			rImage.width = MAX_RESIZE * aspect;
+			rImage.height = MAX_RESIZE;
+		}
+	}
+	else if(flag){
+		rImage = image;
+	}
+	return rImage;
+}
 
 @end

@@ -35,6 +35,7 @@
 -(void) setOrientation: (int) orientation;
 -(void) setScroll:(BOOL) flag decelerationFactor:(float)dec;
 -(void) gravity: (float)x  gy:(float) y gz:(float)z;
+-(CGSize) resizeMaxImage: (CGSize) image: (bool) flag;
 
 @end
 

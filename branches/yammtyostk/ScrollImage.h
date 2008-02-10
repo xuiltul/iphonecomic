@@ -17,9 +17,8 @@
 @interface ScrollImage : UIScroller
 {
 	float			_fDistancePrev;			//前回の2本指の距離
-//	float			_fDistanceStart;
 	bool			_bZooming;				//ズームモード
-	float			_fCurrentPercent;		//ズーム倍率
+	float			_imagezoom;				//ズーム倍率
 	UIImage*		_currentimage;			//イメージオブジェクト
 	CGSize			_imagesize;				//イメージサイズ
 	CGSize			_oimagesize;			//イメージサイズ
@@ -48,7 +47,6 @@
 - (void) setRotate : (bool) isvertical;
 - (void) setOrientation: (int) orientation animate:(bool)anime;
 - (void) goNextPage:(int) next;
-//- (void) setOrgImageSize: (CGSize) imagesize;
+- (CGSize) calcFitImage:(CGSize) oImage;
+
 @end
-
-

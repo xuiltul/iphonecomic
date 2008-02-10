@@ -11,6 +11,7 @@ LDFLAGS=-lobjc \
 	-framework CoreSurface \
 	-framework CoreAudio \
 	-framework IOKit \
+	-framework AudioToolbox \
 	-larmfp 
 
 APPNAME=iComic
