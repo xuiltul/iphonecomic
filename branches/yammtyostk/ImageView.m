@@ -1,5 +1,5 @@
 #import "ImageView.h"
-#define MAXPATHLEN 512
+//#define MAXPATHLEN 512
 #import "Global.h"
 
 struct CGRect screct;		//フルスクリーンの始点とサイズを保持
@@ -59,6 +59,7 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 	[_transition transition:0 toView:_currentscroll];
 	zipfile = 0;
 	_orient = 1;
+	_currentsize = 0;
 
 	return self;
 }
@@ -264,12 +265,13 @@ debug_log(tmp);
 		return 1;
 	}
 	
-	//resizeする？
-	toResize = false;
-	CGSize frame = [nimage size];
-//	NSLog(@"%x  %f,%f", nimage, frame.width, frame.height);
+//	//resizeする？
+//	toResize = false;
+	CGSize loadimage = [nimage size];
+//	NSLog(@"%x  %f,%f", nimage, loadimage.width, loadimage.height);
 
-	int width=0, height=0;
+	CGSize resize;
+//	int width=0, height=0;
 	if( prefData.ToFitScreen == YES){
 		switch(_orient){
 		case 1:		//正面 0°
@@ -279,9 +281,9 @@ sprintf(tmp,"1 or 2\n");
 debug_log(tmp);
 
 			//イメージが横長の場合、イメージの縦を合わせる
-			if( frame.width > frame.height ){
-				height = screct.size.height;
-				width = (int)(frame.width * screct.size.height / frame.height);
+			if( loadimage.width > loadimage.height ){
+				resize.height = screct.size.height;
+				resize.width = loadimage.width * screct.size.height / loadimage.height;
 
 sprintf(tmp,"img yoko\n");
 debug_log(tmp);
@@ -294,16 +296,16 @@ sprintf(tmp,"img Tate\n");
 debug_log(tmp);
 
 				float zoomRate;
-				float tmpZoomH = screct.size.height / frame.height;
-				float tmpZoomW = screct.size.width / frame.width;
+				float tmpZoomH = screct.size.height / loadimage.height;
+				float tmpZoomW = screct.size.width / loadimage.width;
 				//比率を見て、画面に近い場合は、一杯に引き伸ばす
 				if( (float)fabs(tmpZoomH-tmpZoomW) < (float)0.05){
 
 sprintf(tmp,"fit\n");
 debug_log(tmp);
 
-					height = screct.size.height;
-					width = screct.size.width;
+					resize.height = screct.size.height;
+					resize.width = screct.size.width;
 				}
 				else{
 
@@ -315,8 +317,8 @@ debug_log(tmp);
 						zoomRate = tmpZoomW;
 					else
 						zoomRate = tmpZoomH;
-					height = (int)(frame.height * zoomRate);
-					width = (int)(frame.width * zoomRate);
+					resize.height = loadimage.height * zoomRate;
+					resize.width = loadimage.width * zoomRate;
 				}
 			}
 			break;
@@ -327,13 +329,13 @@ sprintf(tmp,"3 or 4\n");
 debug_log(tmp);
 
 			//イメージが横長の場合、イメージの横半分を丁度にする
-			if( frame.width > frame.height ){
+			if( loadimage.width > loadimage.height ){
 
 sprintf(tmp,"yoko hanbun\n");
 debug_log(tmp);
 
-				width = (int)screct.size.height*2;
-				height = (int)((frame.height * screct.size.height * 2) / frame.width);
+				resize.width = screct.size.height*2;
+				resize.height = (loadimage.height * screct.size.height * 2) / loadimage.width;
 			}
 			//イメージが縦長の場合、イメージの横を合わせる
 			else{
@@ -341,13 +343,13 @@ debug_log(tmp);
 sprintf(tmp,"tate haba awase\n");
 debug_log(tmp);
 
-				width = (int)screct.size.height;
-				height = (int)((frame.height * screct.size.height) / frame.width);
+				resize.width = screct.size.height;
+				resize.height = (loadimage.height * screct.size.height) / loadimage.width;
 			}
 			break;
 		}
 
-sprintf(tmp,"size w=%d,h=%d\n",width,height);
+sprintf(tmp,"resize w=%f,h=%f\n",resize.width,resize.height);
 debug_log(tmp);
 
 		//拡大率を指定する場合
@@ -356,51 +358,56 @@ debug_log(tmp);
 sprintf(tmp,"keep scale %f\n", _currentsize);
 debug_log(tmp);
 
-			width *= (int)_currentsize;
-			height *= (int)_currentsize;
+			resize.width *= _currentsize;
+			resize.height *= _currentsize;
 		}
-
-sprintf(tmp,"size w=%d,h=%d\n",width,height);
-debug_log(tmp);
-
+		else{
+			_currentsize = 1;
+		}
 	}
 	else{
 
 sprintf(tmp,"img size\n");
 debug_log(tmp);
 
-//		float aspectr = (frame.width / frame.height) / (_imagesize.width / _imagesize.height);
-//		float wr = frame.width / _imagesize.width;
-//		float hr = frame.height / _imagesize.height;
+//		float aspectr = (loadimage.width / loadimage.height) / (_imagesize.width / _imagesize.height);
+//		float wr = loadimage.width / _imagesize.width;
+//		float hr = loadimage.height / _imagesize.height;
 //		if(aspectr < 0.95 || aspectr > 1.05 || 
 //		wr < 0.95 || wr > 1.05 || 
 //		hr < 0.95 || hr > 1.05) toResize = true;
-//		_imagesize = frame;
+//		_imagesize = loadimage;
 //		
 		//画像が大きすぎるときの処理
 		int ret = 0;
-//		if(frame.width > 1390.0f || frame.height > 1390.0f){
-		if(frame.width > 1190.0f || frame.height > 1190.0f){
-			int width = frame.width, height = frame.height;
-			float aspect = (float)width / (float)height;
-			if(width > height){
-				width = 1000;
-				height = width / aspect;
+		if(loadimage.width > 1390.0f || loadimage.height > 1390.0f){
+//			int width = loadimage.width, height = loadimage.height;
+			resize = loadimage;
+			float aspect = resize.width / resize.height;
+			if(resize.width > resize.height){
+				resize.width = 1000;
+				resize.height = resize.width / aspect;
 			}
 			else{
-				height = 1000;
-				width = height * aspect;
+				resize.height = 1000;
+				resize.width = resize.height * aspect;
 			}
 		}
 	}
 
-	if((width != 0)&&(height != 0)){
-		unsigned char *bitmap = malloc(width * height * sizeof(unsigned char) * 4);
+	if((resize.width > 0)&&(resize.height > 0)){
+		resize.width = (int)resize.width;
+		resize.height = (int)resize.height;
+
+sprintf(tmp,"resize!! w=%f, h=%f\n",resize.width,resize.height);
+debug_log(tmp);
+
+		unsigned char *bitmap = malloc(resize.width * resize.height * sizeof(unsigned char) * 4);
 		CGContextRef bitmapContext;
-		bitmapContext = CGBitmapContextCreate(bitmap,	width, height, 8, width * 4,
+		bitmapContext = CGBitmapContextCreate(bitmap,	resize.width, resize.height, 8, resize.width * 4,
 							CGColorSpaceCreateDeviceRGB(),
 							kCGImageAlphaPremultipliedFirst);
-		CGContextDrawImage (bitmapContext, CGRectMake(0,0,width,height), [nimage imageRef]);
+		CGContextDrawImage (bitmapContext, CGRectMake(0,0,resize.width,resize.height), [nimage imageRef]);
 		CGImageRef *cgImage = CGBitmapContextCreateImage(bitmapContext);
 	
 		[nimage release];
@@ -414,7 +421,7 @@ debug_log(tmp);
 	
 	free(buf);
 
-sprintf(tmp,"reloadFile end\n");
+sprintf(tmp,"reloadFile end resize w=%f,h=%f,_currentsize=%f\n",resize.width,resize.height,_currentsize);
 debug_log(tmp);
 
 	return 0;
@@ -432,6 +439,11 @@ BOOL isDoing = NO;
 - (void)scrollImage: (ScrollImage *)scroll filePrev: (id) hoge
 {
 	if(isDoing) return;
+
+char tmp[256];
+sprintf(tmp,"scrollImage filePrev _currentsize=%f\n",_currentsize);
+debug_log(tmp);
+
 	isDoing = YES;
 	CGPoint pt = [_currentscroll offset];
 	_currentsize = [_currentscroll getPercent];
@@ -464,10 +476,11 @@ BOOL isDoing = NO;
 	}
 	[_transition transition:trans toView:_currentscroll];
 
-	[self prevFile]; 
+	[self prevFile];	//前のページを読み込む
 //	if(prefData.ToKeepScale  && toResize == false){
-//		 [_currentscroll setPercent: _currentsize];
-//	}
+	if(prefData.ToKeepScale){
+		 [_currentscroll setPercent: _currentsize];
+	}
 //	else {
 		[_currentscroll fitRect];
 		[_currentscroll resizeImage];			//リサイズする
@@ -487,6 +500,11 @@ BOOL isDoing = NO;
 
 - (void)scrollImage: (ScrollImage *)scroll fileNext: (id) hoge
 {
+
+char tmp[256];
+sprintf(tmp,"scrollImage fileNext _currentsize=%f\n",_currentsize);
+debug_log(tmp);
+
 	if(isDoing) return;
 	isDoing = YES;
 	CGPoint pt = [_currentscroll offset];
@@ -519,10 +537,11 @@ BOOL isDoing = NO;
 	}
 	[_transition transition:trans toView:_currentscroll];
 	
-	[self nextFile];
+	[self nextFile];	//次のページを読み込む
 //	if(prefData.ToKeepScale && toResize == false){
-//		[_currentscroll setPercent: _currentsize];
-//	}
+	if(prefData.ToKeepScale){
+		[_currentscroll setPercent: _currentsize];
+	}
 //	else{
 		[_currentscroll fitRect];
 		[_currentscroll resizeImage];			//リサイズする

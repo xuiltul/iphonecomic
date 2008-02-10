@@ -2,7 +2,8 @@
 #import <GraphicsServices/GraphicsServices.h>
 #import "Global.h"
 
-float kMinScale = (0.1f);
+//float kMinScale = (0.1f);
+#define MIN_SCALE (1.0f)
 #define MAX_SCALE (2.0f)
 
 #define NEXT_PAGE 1
@@ -133,13 +134,15 @@ int img_width=0, img_height=0;
 /******************************/
 - (void) fitRect
 {
-	CGSize imageRect = _imagesize;
+//	CGSize imageRect = _imagesize;
 
 char tmp[256];
-sprintf(tmp,"fitRect img width=%f,height=%f\n",imageRect.width,imageRect.height);
+//sprintf(tmp,"fitRect img width=%f,height=%f\n",imageRect.width,imageRect.height);
+sprintf(tmp,"fitRect img width=%f,height=%f\n",_imagesize.width,_imagesize.height);
 debug_log(tmp);
 
-	if( (imageRect.width == 0) || (imageRect.height == 0) ) return;
+//	if( (imageRect.width == 0) || (imageRect.height == 0) ) return;
+	if( (_imagesize.width == 0) || (_imagesize.height == 0) ) return;
 
 	if( prefData.ToFitScreen == YES){
 		switch(_orient){
@@ -150,13 +153,16 @@ sprintf(tmp,"fit 1 or 2\n");
 debug_log(tmp);
 
 			//イメージが横長の場合、イメージの縦を合わせる
-			if( imageRect.width > imageRect.height ){
+//			if( imageRect.width > imageRect.height ){
+			if( _imagesize.width > _imagesize.height ){
 
 sprintf(tmp,"fit yoko\n");
 debug_log(tmp);
 
-				img_height = screct.size.height;
-				img_width = (int)(imageRect.width * screct.size.height / imageRect.height);
+//				img_height = screct.size.height;
+				_imagesize.height = screct.size.height;
+//				img_width = (int)(imageRect.width * screct.size.height / imageRect.height);
+				_imagesize.width = (int)(_imagesize.width * screct.size.height / _imagesize.height);
 			}
 			//イメージが縦長の場合、画面一杯に合わせる
 			else{
@@ -165,16 +171,20 @@ sprintf(tmp,"fit tate\n");
 debug_log(tmp);
 
 				float zoomRate;
-				float tmpZoomH = screct.size.height / imageRect.height;
-				float tmpZoomW = screct.size.width / imageRect.width;
+//				float tmpZoomH = screct.size.height / imageRect.height;
+//				float tmpZoomW = screct.size.width / imageRect.width;
+				float tmpZoomH = screct.size.height / _imagesize.height;
+				float tmpZoomW = screct.size.width / _imagesize.width;
 				//比率を見て、画面に近い場合は、一杯に引き伸ばす
 				if( (float)fabs(tmpZoomH-tmpZoomW) < (float)0.05){
 
 sprintf(tmp,"fit fit\n");
 debug_log(tmp);
 
-					img_height = screct.size.height;
-					img_width = screct.size.width;
+//					img_height = screct.size.height;
+//					img_width = screct.size.width;
+					_imagesize.height = screct.size.height;
+					_imagesize.width = screct.size.width;
 				}
 				else{
 
@@ -186,8 +196,10 @@ debug_log(tmp);
 						zoomRate = tmpZoomW;
 					else
 						zoomRate = tmpZoomH;
-					img_height = (int)(imageRect.height * zoomRate);
-					img_width = (int)(imageRect.width * zoomRate);
+//					img_height = (int)(imageRect.height * zoomRate);
+//					img_width = (int)(imageRect.width * zoomRate);
+					_imagesize.height = _imagesize.height * zoomRate;
+					_imagesize.width = _imagesize.width * zoomRate;
 				}
 			}
 			break;
@@ -198,13 +210,16 @@ sprintf(tmp,"fit 3 or 4\n");
 debug_log(tmp);
 
 			//イメージが横長の場合、イメージの横半分を丁度にする
-			if( imageRect.width > imageRect.height ){
+//			if( imageRect.width > imageRect.height ){
+			if( _imagesize.width > _imagesize.height ){
 
 sprintf(tmp,"fit yoko\n");
 debug_log(tmp);
 
-				img_width = screct.size.height*2;
-				img_height = (int)((imageRect.height * screct.size.height * 2) / imageRect.width);
+//				img_width = screct.size.height*2;
+				_imagesize.width = screct.size.height*2;
+//				img_height = (int)((imageRect.height * screct.size.height * 2) / imageRect.width);
+				_imagesize.height = (_imagesize.height * screct.size.height * 2) / _imagesize.width;
 			}
 			//イメージが縦長の場合、イメージの横を合わせる
 			else{
@@ -212,8 +227,10 @@ debug_log(tmp);
 sprintf(tmp,"fit tate\n");
 debug_log(tmp);
 
-				img_width = screct.size.height;
-				img_height = (int)((imageRect.height * screct.size.height) / imageRect.width);
+//				img_width = screct.size.height;
+//				img_height = (int)((imageRect.height * screct.size.height) / imageRect.width);
+				_imagesize.height = (_imagesize.height * screct.size.height) / _imagesize.width;
+				_imagesize.width = screct.size.height;
 			}
 			break;
 		}
@@ -227,8 +244,10 @@ debug_log(tmp);
 sprintf(tmp,"fit 1 or 2\n");
 debug_log(tmp);
 
-			tmpZoomH = screct.size.height / imageRect.height;
-			tmpZoomW = screct.size.width / imageRect.width;
+//			tmpZoomH = screct.size.height / imageRect.height;
+//			tmpZoomW = screct.size.width / imageRect.width;
+			tmpZoomH = screct.size.height / _imagesize.height;
+			tmpZoomW = screct.size.width / _imagesize.width;
 			break;
 		case 3:		//左 90°
 		case 4:		//右 270°
@@ -236,12 +255,16 @@ debug_log(tmp);
 sprintf(tmp,"fit 3 or 4\n");
 debug_log(tmp);
 
-			if( imageRect.height > imageRect.width ){
-				tmpZoomW = tmpZoomH = screct.size.height / imageRect.width;
+//			if( imageRect.height > imageRect.width ){
+//				tmpZoomW = tmpZoomH = screct.size.height / imageRect.width;
+			if( _imagesize.height > _imagesize.width ){
+				tmpZoomW = tmpZoomH = screct.size.height / _imagesize.width;
 			}
 			else{
-				tmpZoomH = screct.size.height / imageRect.width;
-				tmpZoomW = screct.size.width / imageRect.height;
+//				tmpZoomH = screct.size.height / imageRect.width;
+//				tmpZoomW = screct.size.width / imageRect.height;
+				tmpZoomH = screct.size.height / _imagesize.width;
+				tmpZoomW = screct.size.width / _imagesize.height;
 			}
 			break;
 		}
@@ -249,17 +272,24 @@ debug_log(tmp);
 			zoomRate = tmpZoomW;
 		else
 			zoomRate = tmpZoomH;
-		img_height = (int)(imageRect.height * zoomRate);
-		img_width = (int)(imageRect.width * zoomRate);
+//		img_height = (int)(imageRect.height * zoomRate);
+//		img_width = (int)(imageRect.width * zoomRate);
+		_imagesize.height = _imagesize.height * zoomRate;
+		_imagesize.width = _imagesize.width * zoomRate;
 	}
+	_oimagesize = _imagesize;
+//	kMinScale = _imagesize.width;
 	//拡大率を指定する場合
 	if( (prefData.ToKeepScale == YES) && (_fCurrentPercent > 0) ){
-		img_width *= _fCurrentPercent;
-		img_height *= _fCurrentPercent;
+//		img_width *= _fCurrentPercent;
+//		img_height *= _fCurrentPercent;
+		_imagesize.width *= _fCurrentPercent;
+		_imagesize.height *= _fCurrentPercent;
 	}
-	kMinScale = screct.size.height/img_height;
+//	kMinScale = screct.size.height/_imagesize.height;
 
-sprintf(tmp,"fitRect end img_width=%d,height=%d,kMinScale=%f\n",img_width,img_height,kMinScale);
+//sprintf(tmp,"fitRect end img_width=%d,height=%d,kMinScale=%f\n",img_width,img_height,kMinScale);
+sprintf(tmp,"fitRect end img_width=%f,height=%f,_fCurrentPercent=%f\n",_imagesize.width,_imagesize.height,_fCurrentPercent);
 debug_log(tmp);
 }
 
@@ -324,14 +354,19 @@ debug_log(tmp);
 /******************************/
 - (void) resizeImage
 {
-char tmp[256];
-sprintf(tmp,"resizeImage img_width=%d,img_height=%d\n",img_width,img_height);
-debug_log(tmp);
+//char tmp[256];
+////sprintf(tmp,"resizeImage img_width=%d,img_height=%d\n",img_width,img_height);
+//sprintf(tmp,"resizeImage width=%f,height=%f,_fCurrentPercent=%f\n",_imagesize.width,_imagesize.height,_fCurrentPercent);
+//debug_log(tmp);
+//
+//	float isw = (_isvert?	img_width:	img_height);
+//	float ish = (_isvert?	img_height:	img_width);
+	CGSize resizeTmp;
+	resizeTmp.width		= (_isvert?	_imagesize.width:	_imagesize.height);
+	resizeTmp.height	= (_isvert?	_imagesize.height:	_imagesize.width);
 
-	float isw = (_isvert?	img_width:	img_height);
-	float ish = (_isvert?	img_height:	img_width);
-
-	CGRect frame = CGRectMake(0, 0, isw, ish);
+//	CGRect frame = CGRectMake(0, 0, isw, ish);
+	CGRect frame = CGRectMake(0, 0, resizeTmp.width, resizeTmp.height);
 	[_imageview setFrame: frame];			//サイズを変更する
 	[self setContentSize: frame.size];		//画面表示用イメージオブジェクトのサイズを保存
 }
@@ -370,8 +405,13 @@ debug_log(tmp);
 /******************************/
 - (void) setPercent : (float)percent
 {
+char tmp[256];
+sprintf(tmp,"setPercent img_width=%f,img_height=%f,_fCurrentPercent=%f,_orient=%d\n"
+						,_imagesize.width,_imagesize.height,_fCurrentPercent,_orient);
+debug_log(tmp);
+
 	_fCurrentPercent = percent;
-	[self resizeImage];
+//	[self resizeImage];
 	//[self setOffset: CGPointMake(0,0)];
 }
 
@@ -398,6 +438,8 @@ debug_log(tmp);
 /******************************/
 - (void) setImageFromImage : (UIImage *)image withFlag:(BOOL)flag;
 {
+char tmp[256];
+
 	UIImage *maeimage = _currentimage;
 	BOOL mflag = _maeFlag;
 	_maeFlag = flag;
@@ -408,6 +450,10 @@ debug_log(tmp);
 	[image setOrientation: 0];				//イメージの回転方向を0
 	[_imageview setImage: _currentimage];	//イメージを表示イメージに設定
 	[self setContentSize: _imagesize];		
+
+sprintf(tmp,"setImageFromImage _imagesize w=%f,h=%f,_fCurrentPercent=%f,_orient=%d\n"
+,_imagesize.width,_imagesize.height,_fCurrentPercent,_orient);
+debug_log(tmp);
 
 	if(maeimage != nil){
 		if(mflag) CGImageRelease([maeimage imageRef]);
@@ -421,8 +467,10 @@ debug_log(tmp);
 - (void) scrollToTopRight
 {
 char tmp[256];
-sprintf(tmp,"scrollToTopRight img_width=%d,img_height=%d,_fCurrentPercent=%f,_orient=%d\n"
-,img_width,img_height,_fCurrentPercent,_orient);
+sprintf(tmp,"scrollToTopRight img_width=%f,img_height=%f,_fCurrentPercent=%f,_orient=%d\n"
+,_imagesize.width,_imagesize.height,_fCurrentPercent,_orient);
+//sprintf(tmp,"scrollToTopRight img_width=%d,img_height=%d,_fCurrentPercent=%f,_orient=%d\n"
+//,img_width,img_height,_fCurrentPercent,_orient);
 debug_log(tmp);
 
 	//イメージのサイズにズーム倍率をかけて、イメージをスクロールする
@@ -431,15 +479,18 @@ debug_log(tmp);
 //		isw = img_width;
 //		ish = img_height;
 
-		[self scrollRectToVisible: CGRectMake( img_width * _fCurrentPercent, 0, 1, 1)];
+		[self scrollRectToVisible: CGRectMake( _imagesize.width, 0, 1, 1)];
+//		[self scrollRectToVisible: CGRectMake( img_width * _fCurrentPercent, 0, 1, 1)];
 //		[self scrollRectToVisible: CGRectMake( _imagesize.width * _fCurrentPercent, 0, 1, 1)];
 		break;
 	case 2:		//180°
 		[self setOffset: CGPointMake(0,0)];
 		break;
 	case 3:		//左 90°
-		[self scrollRectToVisible: CGRectMake( img_height * _fCurrentPercent
-												, img_width * _fCurrentPercent, 1, 1)];
+		[self scrollRectToVisible: CGRectMake( _imagesize.height
+												, _imagesize.width, 1, 1)];
+//		[self scrollRectToVisible: CGRectMake( img_height * _fCurrentPercent
+//												, img_width * _fCurrentPercent, 1, 1)];
 //		[self scrollRectToVisible: CGRectMake( _imagesize.height * _fCurrentPercent
 //												, _imagesize.width * _fCurrentPercent, 1, 1)];
 		break;
@@ -455,7 +506,12 @@ debug_log(tmp);
 /******************************/
 - (float) getPercent
 {
+char tmp[256];
+sprintf(tmp,"getPercent img_width=%f,img_height=%f,_fCurrentPercent=%f,_orient=%d\n"
+						,_imagesize.width,_imagesize.height,_fCurrentPercent,_orient);
+debug_log(tmp);
 	return _fCurrentPercent;
+//	return _imagesize.width/kMinScale;
 }
 
 //******************************
@@ -487,6 +543,10 @@ debug_log(tmp);
 - (void)mouseUp:(GSEventRef)theEvent
 {
 	int next=0, lt=0, lb=0, rt=0, rb=0, hit=0;
+
+char tmp[256];
+sprintf(tmp,"mouseUp w=%f,h=%f,_fCP=%f\n",_imagesize.width,_imagesize.height,_fCurrentPercent);
+debug_log(tmp);
 
 	//ズームモードが有効な場合は、画面移動は無効
 	if( _bZooming == true ){
@@ -562,6 +622,10 @@ debug_log(tmp);
 /******************************/
 - (void)mouseDragged:(GSEventRef)theEvent
 {
+//char tmp[256];
+//sprintf(tmp,"mouseDragged width=%f,height=%f\n",_imagesize.width,_imagesize.height);
+//debug_log(tmp);
+
 	// 2本指でタッチ（ 0 = one finger down、1 = two fingers down ）
 	if ( GSEventIsChordingHandEvent(theEvent) ){
 		// タッチしている2つの座標を取得する。pt1、pt2
@@ -578,18 +642,41 @@ debug_log(tmp);
 			_fCurrentPercent = _fCurrentPercent + (.004 * fHowFar); // パーセンテージをかける
 			//ズームモードを有効にする
 			_bZooming = true;
-			
-			//画面サイズ以下になった場合は、画面サイズに設定する
-			if(_fCurrentPercent <= kMinScale){
-				_fCurrentPercent = kMinScale;
-			}
-			//ズーム倍率が範囲内の場合、リサイズを実行する
-			if( (_fCurrentPercent >= kMinScale) && (_fCurrentPercent <= MAX_SCALE) ){
-				//リサイズする
-				img_width *= _fCurrentPercent;
-				img_height *= _fCurrentPercent;
+//			
+//			//画面サイズ以下になった場合は、画面サイズに設定する
+//			if(_fCurrentPercent <= kMinScale){
+//				_fCurrentPercent = kMinScale;
+//			}
+//
+//			//ズーム倍率が範囲内の場合、リサイズを実行する
+//			if( (_fCurrentPercent >= kMinScale) && (_fCurrentPercent <= MAX_SCALE) ){
+//				//リサイズする
+//				img_width *= _fCurrentPercent;
+//				img_height *= _fCurrentPercent;
+
+//				float aspect = _imagesize.width / _imagesize.height;
+//				if( (_imagesize.width + (fHowFar*aspect)) < kMinScale ){
+//					_imagesize.width = kMinScale;
+//					_imagesize.height = kMinScale/aspect;
+//				}
+//				else if( kMinScale*2 < (_imagesize.width + (fHowFar*aspect)) ){
+//					_imagesize.width = kMinScale*2;
+//					_imagesize.height = kMinScale*2/aspect;
+//				}
+//				else{
+//					_imagesize.width += fHowFar*aspect ;
+//					_imagesize.height += fHowFar/aspect;
+//				}
+//				_fCurrentPercent = _imagesize.width / kMinScale;
+
+				if( _fCurrentPercent < MIN_SCALE ) _fCurrentPercent = MIN_SCALE;
+				else if( MAX_SCALE < _fCurrentPercent ) _fCurrentPercent = MAX_SCALE;
+
+				_imagesize.width = _oimagesize.width * _fCurrentPercent;
+				_imagesize.height = _oimagesize.height * _fCurrentPercent;
+
 				[self resizeImage];
-			}
+//			}
 			//現在の2本指の距離を保存する
 			_fDistancePrev = fDistance;
 		}
@@ -667,6 +754,14 @@ debug_log(tmp);
 	default:
 		break;
 	}
+}
+
+/************************************/
+/* オリジナルの画像サイズを保存する */
+/************************************/
+- (void) setOrgImageSize: (CGSize) imagesize
+{
+	_oimagesize = imagesize;
 }
 
 @end
