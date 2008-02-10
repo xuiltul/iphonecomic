@@ -13,13 +13,13 @@
 	NSMutableArray*	filenamelist;		//ZIP内のファイル名一覧
 	unsigned int	_currentpos;		//表示イメージのページ番号
 	float			_currentsize;		//ズーム倍率
-	CGSize			_imagesize;			//イメージサイズ
+//	CGSize			_imagesize;			//イメージサイズ
 	UIImage*		_nowimage;			//表示イメージ
 	UITransitionView*	_transition;	//アニメーション？
 	char			_filenamebuf[512];	//ZIPファイルパス
 	id				_fileDelegate;		//
 	int				_orient;			//回転角度
-	bool			toResize;			//リサイズON/OFF
+//	bool			toResize;			//リサイズON/OFF
 //	UIProgressIndicator * _progressIndicator;
 }
 

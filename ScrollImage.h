@@ -22,6 +22,7 @@
 	float			_fCurrentPercent;		//ズーム倍率
 	UIImage*		_currentimage;			//イメージオブジェクト
 	CGSize			_imagesize;				//イメージサイズ
+	CGSize			_oimagesize;			//イメージサイズ
 	UIImageView*	_imageview;				//表示用イメージオブジェクト
 	id				_mdelegate;
 	CGPoint			_centerpoint;			//中心座標
@@ -47,6 +48,7 @@
 - (void) setRotate : (bool) isvertical;
 - (void) setOrientation: (int) orientation animate:(bool)anime;
 - (void) goNextPage:(int) next;
+//- (void) setOrgImageSize: (CGSize) imagesize;
 @end
 
 
