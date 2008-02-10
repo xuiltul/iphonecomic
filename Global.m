@@ -267,7 +267,7 @@ void SavePage()
 //デバッグログ
 void debug_log(char *log_data)
 {
-#if 1
+#if 0
 	FILE* pfile = fopen("/Applications/iComic.app/Debug.log", "a");
 	if(log_data==0x00) return;
 	if(log_data[0]==0x00) return;
