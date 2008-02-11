@@ -11,6 +11,7 @@ LDFLAGS=-lobjc \
 	-framework CoreSurface \
 	-framework CoreAudio \
 	-framework IOKit \
+	-framework AudioToolbox \
 	-larmfp 
 
 APPNAME=iComic
@@ -34,10 +35,11 @@ clean:
 package: $(APPNAME)
 	rm -fr $(APPNAME).app
 	mkdir -p $(APPNAME).app
+	mkdir -p $(APPNAME).app/Japanese.lproj
 	mv $(APPNAME) $(APPNAME).app/$(APPNAME)
 	cp Info.plist $(APPNAME).app/Info.plist
 	cp *.png $(APPNAME).app/
-	cp -r Japanese.lproj $(APPNAME).app/
+	cp Japanese.lproj/*.strings $(APPNAME).app/Japanese.lproj/
 	cp ReadMe $(APPNAME).app/ReadMe
 
 debug: $(APPNAME) package

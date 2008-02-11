@@ -33,24 +33,28 @@
 {
 	UIPreferencesTable *_prefstable;
 	UINavigationBar *_navbar;
-	UIPreferencesControlTableCell *_scrollcell;
-	UIPreferencesTextTableCell *_scrollspeedcell;
-	UIPreferencesControlTableCell *_statusbarcell;
-	UIPreferencesControlTableCell *_migicell;
-	UIPreferencesControlTableCell *_scalecell;
-//	UIPreferencesControlTableCell *_slidecell;
-	UIPreferencesTextTableCell *_buttonsizecell;
-	UIPreferencesControlTableCell *_directioncell;
-	UIPreferencesControlTableCell *_errorcell;
 
-	UIPreferencesControlTableCell *_gravitycell;
-	UIPreferencesControlTableCell *_buttoncell;
-	UIPreferencesControlTableCell *_swipecell;
-	
-	
-	UISegmentedControl *_segCtrl;
-	UIPreferencesTextTableCell *_segCell;
-	
+	UIPreferencesControlTableCell*	_bouncecell;
+	UIPreferencesControlTableCell*	_migicell;
+	UIPreferencesControlTableCell*	_scalecell;
+	UIPreferencesControlTableCell*	_statusbarcell;
+	UIPreferencesControlTableCell*	_sliderigntcell;
+	UIPreferencesTextTableCell*		_scrollspeedcell;
+
+	UIPreferencesControlTableCell*	_leftbtncell;
+	UIPreferencesControlTableCell*	_fitscrcell;
+	UIPreferencesTextTableCell*		_buttonsizecell;
+	UIPreferencesControlTableCell*	_gravitycell;
+	UIPreferencesControlTableCell*	_buttoncell;
+	UIPreferencesControlTableCell*	_swipecell;
+	UIPreferencesControlTableCell*	_soundcell;
+
+	UISegmentedControl*				_segCtrl;
+	UIPreferencesTextTableCell*		_segCell;
+
+//	UIPreferencesControlTableCell *_slidecell;
+//	UIPreferencesControlTableCell *_errorcell;
+
 	id _delegate;
 }
 	
