@@ -338,24 +338,16 @@ BOOL isDoing = NO;
 	int trans = 0;
 	switch(_orient){
 	case 1:		//正面 0°
-//		if(prefData.SlideDirection)	trans = 2;
-//		else						trans = 1;
-		trans = 1;
+		trans = (prefData.SlideRignt? 1: 2);
 		break;
 	case 2:		//180°
-//		if(prefData.SlideDirection)	trans = 1;
-//		else						trans = 2;
-		trans = 2;
+		trans = (prefData.SlideRignt? 2: 1);
 		break;
 	case 3:		//左 90°
-//		if(prefData.SlideDirection)	trans = 7;
-//		else						trans = 3;
-		trans = 3;
+		trans = (prefData.SlideRignt? 3: 7);
 		break;
 	case 4:		//右 270°
-//		if(prefData.SlideDirection)	trans = 3;
-//		else						trans = 7;
-		trans = 7;
+		trans = (prefData.SlideRignt? 7: 3);
 		break;
 	}
 	[_transition transition:trans toView:_currentscroll];
@@ -396,24 +388,16 @@ BOOL isDoing = NO;
 	int trans = 0;
 	switch(_orient){
 	case 1:		//正面 0°
-//		if(prefData.SlideDirection)	trans = 1;
-//		else						trans = 2;
-		trans = 2;
+		trans = (prefData.SlideRignt? 2: 1);
 		break;
 	case 2:		//180°
-//		if(prefData.SlideDirection)	trans = 2;
-//		else						trans = 1;
-		trans = 1;
+		trans = (prefData.SlideRignt? 1: 2);
 		break;
 	case 3:		//左 90°
-//		if(prefData.SlideDirection)	trans = 3;
-//		else						trans = 7;
-		trans = 7;
+		trans = (prefData.SlideRignt? 7: 3);
 		break;
 	case 4:		//右 270°
-//		if(prefData.SlideDirection)	trans = 7;
-//		else						trans = 3;
-		trans = 3;
+		trans = (prefData.SlideRignt? 3: 7);
 		break;
 	}
 	[_transition transition:trans toView:_currentscroll];

@@ -106,8 +106,7 @@ void initialize(int hz) {
 	}
 	//Get screen rect
 	struct CGRect screct = [UIHardware fullScreenApplicationContentRect];
-	screct.origin.x = screct.origin.y = 0.0f;
-	//screct.origin.y = -20;
+	screct.origin = CGPointZero;
 
 	//setup window
 	UIWindow *window;

@@ -393,15 +393,20 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 			//ズームモードを有効にする
 			_bZooming = true;
 			//倍率が範囲を超える場合は、最大・最小値に設定
-			if( _imagezoom < MIN_SCALE ) _imagezoom = MIN_SCALE;
-			else if( MAX_SCALE < _imagezoom ) _imagezoom = MAX_SCALE;
-
+			if( _imagezoom < MIN_SCALE ){
+				_imagezoom = MIN_SCALE;
+			}
+			else if( MAX_SCALE < _imagezoom ){
+				 _imagezoom = MAX_SCALE;
+			}
+			else{
+				//現在の2本指の距離を保存する
+				_fDistancePrev = fDistance;
+			}
 			_imagesize.width = _oimagesize.width * _imagezoom;
 			_imagesize.height = _oimagesize.height * _imagezoom;
 
 			[self resizeImage];
-			//現在の2本指の距離を保存する
-			_fDistancePrev = fDistance;
 		}
 		// ズームする場合はここで終了
 		if(_bZooming) return;
@@ -434,20 +439,20 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 	int next=0;
 	switch(_orient){
 	case 1:		//正面 0°
-		if( orientation == 8 )		next = NEXT_PAGE;
-		else if( orientation == 4 )	next = PREV_PAGE;
+		if( orientation == 8 )		next = (prefData.SlideRignt? NEXT_PAGE: PREV_PAGE);
+		else if( orientation == 4 )	next = (prefData.SlideRignt? PREV_PAGE: NEXT_PAGE);
 		break;
 	case 2:		//180°
-		if( orientation == 4 )		next = NEXT_PAGE;
-		else if( orientation == 8 )	next = PREV_PAGE;
+		if( orientation == 4 )		next = (prefData.SlideRignt? NEXT_PAGE: PREV_PAGE);
+		else if( orientation == 8 )	next = (prefData.SlideRignt? PREV_PAGE: NEXT_PAGE);
 		break;
 	case 3:		//左 90°
-		if( orientation == 2 )		next = NEXT_PAGE;
-		else if( orientation == 1 )	next = PREV_PAGE;
+		if( orientation == 2 )		next = (prefData.SlideRignt? NEXT_PAGE: PREV_PAGE);
+		else if( orientation == 1 )	next = (prefData.SlideRignt? PREV_PAGE: NEXT_PAGE);
 		break;
 	case 4:		//右 270°
-		if( orientation == 1 )		next = NEXT_PAGE;
-		else if( orientation == 2 )	next = PREV_PAGE;
+		if( orientation == 1 )		next = (prefData.SlideRignt? NEXT_PAGE: PREV_PAGE);
+		else if( orientation == 2 )	next = (prefData.SlideRignt? PREV_PAGE: NEXT_PAGE);
 		break;
 	default:
 		break;
@@ -462,7 +467,7 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 - (void) goNextPage:(int) next
 {
 	//クリック音を鳴らす
-	if( next != 0 )	AudioServicesPlaySystemSound(1105);
+	if( next != 0 )	SOUND_CLICK;
 
 	switch(next){
 	case NEXT_PAGE:
