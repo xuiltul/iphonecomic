@@ -26,11 +26,11 @@
 - (id)initWithFrame:(struct CGRect)frame{
 	if ((self == [super initWithFrame: frame]) != nil) {
 		UITableColumn *col = [[UITableColumn alloc]
-			initWithTitle: @"FileName"
-			identifier:@"filename"
-			width: frame.size.width
-		];
-
+								initWithTitle: @"FileName"
+								identifier:@"filename"
+								width: frame.size.width
+							];
+		
 		_table = [[UITable alloc] initWithFrame: CGRectMake(0, 0, frame.size.width, frame.size.height)];
 		[_table addTableColumn: col];
 		[_table setSeparatorStyle: 1];
@@ -95,15 +95,15 @@
 
 	[_files removeAllObjects];
 
-        NSString *file;
-        NSEnumerator *dirEnum = [tempArray objectEnumerator];
+	NSString *file;
+	NSEnumerator *dirEnum = [tempArray objectEnumerator];
 	while (file = [dirEnum nextObject]) {
 		if (_extensions != nil && [_extensions count] > 0) {
 			NSString *extension = [[file pathExtension] lowercaseString];
 			if ([_extensions containsObject: extension]) {
 				[_files addObject: file];
 			}
-		} else {
+		}else{
 			[_files addObject: file];
 		}
  	}
@@ -122,28 +122,29 @@
 	return _rowCount;
 }
 
+/******************************/
+/* ZIPファイルの一覧を作成    */
+/******************************/
 - (UITableCell *)table:(UITable *)table cellForRow:(int)row column:(UITableColumn *)col {
-        BOOL isDir = NO;
-        char buf0[MAXPATHLEN];
-        
+	BOOL isDir = NO;
+	char buf0[MAXPATHLEN];
+	
 	UIImageAndTextTableCell *cell = [[UIImageAndTextTableCell alloc] init];
 	[cell setTitle: [[_files objectAtIndex: row] stringByDeletingPathExtension]];
 	NSString* path0 = [_path copy];
-	if([_path characterAtIndex: [_path length] - 1] != '/')
-	{
+	if([_path characterAtIndex: [_path length] - 1] != '/'){
 		path0 = [_path stringByAppendingString: @"/"];
 	}
 
 	NSString *file = [path0 stringByAppendingString:[_files objectAtIndex:row]];
 //	NSLog(file);
-	if ([[NSFileManager defaultManager] fileExistsAtPath:file isDirectory:&isDir] && isDir)
-	{
-	     [cell setShowDisclosure:YES];
-	     [cell setImage: _folder];
-	     [[cell iconImageView] setFrame:CGRectMake(-10,0,32,32)];
+	//ディレクトリの場合
+	if ([[NSFileManager defaultManager] fileExistsAtPath:file isDirectory:&isDir] && isDir){
+		[cell setShowDisclosure:YES];
+		[cell setImage: _folder];
+		[[cell iconImageView] setFrame:CGRectMake(-10,0,32,32)];
 	}
-	else if(0)
-	{
+	else if(0){
 		//zipから表紙？をとってくる
 		[file getCString: buf0 maxLength:MAXPATHLEN encoding:NSUTF8StringEncoding];
 		unzFile zipfile = unzOpen(buf0);	
@@ -182,20 +183,19 @@
 
 		//[cell setImage: ];
 	}
-	else
-	{	
+	//ZIPファイルの場合
+	else{
 		[file getCString: buf0 maxLength:MAXPATHLEN encoding:NSUTF8StringEncoding];
 		int t = GetPageData(buf0).page;
 		if(t == -1)
 			[cell setImage: _booksf];
-		else if(t == -2)
-		{
+		else if(t == -2){
 			[cell setImage: _books];
 		}
 		else
 			[cell setImage: _bookss];
 			
-	     [[cell iconImageView] setFrame:CGRectMake(-10,0,12,12)];
+		[[cell iconImageView] setFrame:CGRectMake(-10,0,12,12)];
 	}
 
 	return cell;

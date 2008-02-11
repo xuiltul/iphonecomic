@@ -11,15 +11,15 @@
 
 #define NAVBARHEIGHT 48
 
-
-char tmpfilename[MAXPATHLEN];
+int tmpAlertSheetId;
+int tmpAlertDispId;
 
 Application* app = nil;
-
 
 typedef struct {} *IOHIDEventSystemRef;
 typedef struct {} *IOHIDEventRef;
 float IOHIDEventGetFloatValue(IOHIDEventRef ref, int param);
+char NowFilePath[MAXPATHLEN];
 
 void handleHIDEvent(int a, int b, int c, IOHIDEventRef ptr) {
 	int type = IOHIDEventGetType(ptr);
@@ -28,8 +28,7 @@ void handleHIDEvent(int a, int b, int c, IOHIDEventRef ptr) {
 		float y = IOHIDEventGetFloatValue(ptr, 0xc0001);
 		float z = IOHIDEventGetFloatValue(ptr, 0xc0002);
 		//changeInXYZ( x, y, z );
-		if(app != nil)
-		{
+		if(app != nil){
 			[app gravity: x gy:y gz:z];
 		}
 	}
@@ -69,6 +68,8 @@ void initialize(int hz) {
 
 	res = IOHIDEventSystemOpen(sys, handleHIDEvent, 0, 0);
 	expect(res != 0);
+	tmpAlertSheetId = 0;
+	tmpAlertDispId = 0;
 }
 
 @implementation ExNavBar
@@ -79,10 +80,9 @@ void initialize(int hz) {
 
 - (void)popNavigationItem
 {
-	if([_popDelegate respondsToSelector:@selector(exNavBar:popNavigationItem:)])
-	{
+	if([_popDelegate respondsToSelector:@selector(exNavBar:popNavigationItem:)]){
 		[_popDelegate exNavBar:self popNavigationItem:self];
-	}	
+	}
 	[super popNavigationItem];
 }
 @end
@@ -90,29 +90,23 @@ void initialize(int hz) {
 
 @implementation Application
 - (void)deviceOrientationChanged:(GSEvent *)event {
-/*	UITextView* textView = [[UITextView alloc] initWithFrame: CGRectMake(0.0f, 40.0f, 320.0f, 245.0f - 40.0f)];
-	[_mainview addSubview:textView];
-	[textView setText: [NSString stringWithFormat:@"%d", [UIHardware deviceOrientation:YES]]];*/
 	int orient = [UIHardware deviceOrientation:YES];
-	if(prefsData.Rotation != 0) orient = prefsData.Rotation;
+	if(prefData.Rotation != 0) orient = prefData.Rotation;
 	[_imageview setOrientation: orient];
 }
 
-
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
-	LoadUIText();
+	LoadPref();
+	LoadPage();
 	app = self;
-	if(prefsData.HideStatusbar == YES)
-	{
+	if(prefData.HideStatusbar == YES){
 		[self setStatusBarMode:2 orientation:0 duration:0];
 		[UIHardware _setStatusBarHeight: 0];
 	}
+	//Get screen rect
 	struct CGRect screct = [UIHardware fullScreenApplicationContentRect];
-	screct.origin.x = screct.origin.y = 0.0f;
-	//screct.origin.y = -20;
-
-	
+	screct.origin = CGPointZero;
 
 	//setup window
 	UIWindow *window;
@@ -120,33 +114,30 @@ void initialize(int hz) {
 	[window orderFront: self];
 	[window makeKey: self];
 	[window _setHidden: NO];
-	
-	//setup mainview
-        _mainview = [[UIView alloc] initWithFrame: screct];
-        
 
-        //setup navigationbar
+	//setup mainview
+	_mainview = [[UIView alloc] initWithFrame: screct];
+
+	//ナビゲーションバーの設定（ファイル選択の画面）
 	_navbar = [[ExNavBar alloc] initWithFrame:
 	CGRectMake(0, 0, screct.size.width, NAVBARHEIGHT)];
 	[_navbar setDelegate:self];
 	[_navbar hideButtons];
 	[_navbar setPopDelegate:self];
-	[_navbar showLeftButton:nil withStyle:2 rightButton:NSLocalizedString(@"Settings", nil) withStyle:0];
-
-	//put string
-	UINavigationItem *navItem;
+	[_navbar showLeftButton:nil withStyle:2
+				rightButton:NSLocalizedString(@"Action", nil) withStyle:0];	//ボタンを表示
+	UINavigationItem *navItem;												//タイトル表示
 	navItem = [[UINavigationItem alloc] initWithTitle: NSLocalizedString(@"Select file", nil)];
 	[_navbar pushNavigationItem: navItem];
 
-	
-	//setup transitonview
+	//Create window & view
 	_transition = [[UITransitionView alloc] initWithFrame:
-	CGRectMake(0, 0, screct.size.width, screct.size.height)];
+			CGRectMake(0, 0, screct.size.width, screct.size.height)];
 	[_transition setDelegate:self];
 	
 	//setup transitonview
 	_tabletransition = [[UITransitionView alloc] initWithFrame:
-	CGRectMake(0, NAVBARHEIGHT, screct.size.width, screct.size.height - NAVBARHEIGHT)];
+			CGRectMake(0, NAVBARHEIGHT, screct.size.width, screct.size.height - NAVBARHEIGHT)];
 	[_tabletransition setDelegate:self];
 	
 	//setup browser
@@ -165,24 +156,19 @@ void initialize(int hz) {
 	_zbrowser = [[ZipFileBrowser alloc]  initWithFrame:CGRectMake(0, 0, screct.size.width, screct.size.height - NAVBARHEIGHT)];
 	[_zbrowser setPath:COMICPATH];
 	[_zbrowser setDelegate:self];
-	
-	
-	//setup ImageView
-	_imageview = [[ImageView alloc] initWithFrame:screct];
-	[_imageview setFileDelegate: self];
-	
 
-	//
-	// window　→　transition→ navBar
-	//                    　→ _tabletransition→_browser
-	//
+	//イメージ表示の設定
+	_imageview = [[ImageView alloc] initWithFrame:screct];
+	[_imageview setImageDelegate: self];
+
+	// window(_transition->_mainview+_navbar+_tabletransition
+	//                                       _tabletransition→_browser
 	[window setContentView: _transition];
 	[_transition transition:0 toView:_mainview];
 
 	[_mainview addSubview:_navbar];
 	[_mainview addSubview:_tabletransition];
 	[_tabletransition transition: 0 toView:_browser];
-
 
 	//setup prefsview
 	_prefsview = [[PrefsView alloc] initWithFrame:CGRectMake(0, 0, screct.size.width, screct.size.height)];
@@ -191,6 +177,26 @@ void initialize(int hz) {
 	initialize(30);
 	[self reportAppLaunchFinished];
 	[self deviceOrientationChanged: nil];
+
+	UIAlertSheet *sheet = [ [ UIAlertSheet alloc ] initWithFrame: CGRectMake(0, 240, 320, 240) ];
+	[ sheet setTitle: COMICVER ];
+	[ sheet setBodyText: NSLocalizedString(@"Select action", nil)];
+	[ sheet addButtonWithTitle: NSLocalizedString(@"Start with saved position last", nil)];
+	[ sheet addButtonWithTitle: NSLocalizedString(@"Settings", nil)];
+	[ sheet addButtonWithTitle: NSLocalizedString(@"Cancel", nil)];
+	[ sheet setDelegate: self ];
+	[ sheet presentSheetFromAboveView: _currentBrowser ];
+	tmpAlertSheetId = 1;
+	tmpAlertDispId = 1;
+}
+
+/******************************/
+/* アプリ終了時に実行される   */
+/******************************/
+-(void) applicationWillSuspend
+{
+	SavePage();
+	[super applicationWillSuspend];
 }
 
 -(void) gravity: (float)x  gy:(float) y gz:(float)z
@@ -212,64 +218,95 @@ void initialize(int hz) {
 	[super dealloc];
 }
 
+/******************************/
+/* 設定画面を終了する         */
+/******************************/
 - (void)prefsView : (PrefsView *)prefs done: (id) unused
 {
 	[self deviceOrientationChanged: nil];
-	[_imageview setScroll: prefsData.IsScroll decelerationFactor: prefsData.ScrollSpeed];
-	[_transition transition: 5 toView:_mainview];	
+	[_imageview setScroll: prefData.IsScroll decelerationFactor: prefData.ScrollSpeed];
+	[_transition transition: 5 toView:_mainview];
 }
 
+/******************************/
+/* 画像表示を終了する         */
+/******************************/
 - (void)imageView: (ImageView *)scroll fileEnd: (id) hoge
 {
-	[_transition transition: 2 toView:_mainview];
-	IsViewingComic = 0;
+	[_transition transition:2 toView:_mainview];
+	IsViewingComic = 0;								//画像表示終了
 }
 
+/**********************************/
+/* ナビゲーションバーのアクション */
+/**********************************/
 - (void)navigationBar:(UINavigationBar*)navbar buttonClicked:(int)button
 {
-	[_transition transition: 8 toView: _prefsview];
+	UIAlertSheet *sheet = [ [ UIAlertSheet alloc ] initWithFrame: CGRectMake(0, 240, 320, 240) ];
+	[ sheet setTitle: NSLocalizedString(@"Action", nil) ];
+	[ sheet setBodyText: NSLocalizedString(@"Select action", nil) ];
+	if( tmpAlertDispId == 1 ){
+		[ sheet addButtonWithTitle: NSLocalizedString(@"Start with saved position last", nil) ];
+	}
+	[ sheet addButtonWithTitle: NSLocalizedString(@"Settings", nil) ];
+	[ sheet addButtonWithTitle: NSLocalizedString(@"Cancel", nil) ];
+	[ sheet setDelegate: self ];
+	if( tmpAlertDispId == 2 ){
+		[ sheet presentSheetFromAboveView: _zbrowser ];
+		tmpAlertSheetId = 3;
+	}
+	else{
+		[ sheet presentSheetFromAboveView: _currentBrowser ];
+		tmpAlertSheetId = 1;
+	}
 }
 
+/******************************/
+/*                            */
+/******************************/
 - (void)exNavBar : (ExNavBar *)navbar popNavigationItem: (id) unused
 {
-	if([_tabletransition containsView: _zbrowser])
-	{
+	if([_tabletransition containsView: _zbrowser]){
 		[_currentBrowser reloadData];
-		[_tabletransition transition:2 toView: _currentBrowser];	
+		[_tabletransition transition:2 toView: _currentBrowser];
+		tmpAlertDispId = 1;
 		return;	
 	}
-	else
-	{
-		if(_currentBrowser == _browser) _currentBrowser = _browser2;
-		else _currentBrowser = _browser;
+	else{
+		if(_currentBrowser == _browser)
+			_currentBrowser = _browser2;
+		else
+			_currentBrowser = _browser;
 	}
 	
 //	NSString* file = [[NSString stringWithCString: tmpfilename encoding:NSUTF8StringEncoding] stringByDeleting PathComponent];
-	NSString* file = [NSString stringWithCString: tmpfilename encoding:NSUTF8StringEncoding];
+	NSString* file = [NSString stringWithCString: NowFilePath encoding:NSUTF8StringEncoding];
 
 	BOOL isDir = NO;
 	
-	//tmpfilenameがファイル名の時がある
-	if([[NSFileManager defaultManager] fileExistsAtPath:file isDirectory:&isDir] && isDir)
-	{
+	//NowFilePathがファイル名の時がある
+	if([[NSFileManager defaultManager] fileExistsAtPath:file isDirectory:&isDir] && isDir){
 		file = [file stringByDeletingLastPathComponent];
 	}
-	else
-	{
+	else{
 		file = [[file stringByDeletingLastPathComponent] stringByDeletingLastPathComponent];
 	}
 
-	[file getCString: tmpfilename maxLength:MAXPATHLEN encoding:NSUTF8StringEncoding];
+	[file getCString:NowFilePath maxLength:MAXPATHLEN encoding:NSUTF8StringEncoding];
 	[_currentBrowser setPath:file];
 	[_currentBrowser reloadData];
 	
 	[_tabletransition transition:2 toView: _currentBrowser];
+	tmpAlertDispId = 1;
 }
 
+/******************************/
+/* イメージ表示               */
+/******************************/
 - (void)zipFileBrowser: (ZipFileBrowser *)browser fileSelected:(int)row 
 {
 	if(row == -1) return;
-	[_imageview setFile: [NSString stringWithCString:tmpfilename encoding:NSUTF8StringEncoding]];
+	[_imageview setFile: [NSString stringWithCString:NowFilePath encoding:NSUTF8StringEncoding]];
 	[_imageview setPage: row];
 	[_imageview reloadFile];
 	[_imageview fitImage];
@@ -278,84 +315,126 @@ void initialize(int hz) {
 	return;	
 }
 
+/*********************************************/
+/*一覧からZIPファイルやディレクトリを選択した*/
+/*********************************************/
 - (void)fileBrowser: (FileBrowser *)browser fileSelected:(NSString *)file 
 {
 	BOOL isDir = NO;
 	//ディレクトリの時
-	if ([[NSFileManager defaultManager] fileExistsAtPath:file isDirectory:&isDir] && isDir)
-	{
+	if ([[NSFileManager defaultManager] fileExistsAtPath:file isDirectory:&isDir] && isDir){
 //		NSLog(@"directory");
-		if(_currentBrowser == _browser) _currentBrowser = _browser2;
-		else _currentBrowser = _browser;
-		
+		if(_currentBrowser == _browser)
+			_currentBrowser = _browser2;
+		else
+			_currentBrowser = _browser;
+
 		[_currentBrowser setPath:file];
 		[_currentBrowser reloadData];
 
-		[file getCString: tmpfilename maxLength:MAXPATHLEN encoding:NSUTF8StringEncoding];
+		[file getCString:NowFilePath maxLength:MAXPATHLEN encoding:NSUTF8StringEncoding];
 		
-		//put string
+		//ナビゲーションバーにディレクトリ名を表示
 		UINavigationItem *navItem;
 		navItem = [[UINavigationItem alloc] initWithTitle: [file lastPathComponent]];
 		[_navbar pushNavigationItem: navItem];
-		
 		[_tabletransition transition:1 toView: _currentBrowser];
+		tmpAlertDispId = 1;
 	}
-	else
-	{
+	//ZIPファイルの時
+	else{
 //		NSLog(@"file");
-		[file getCString: tmpfilename maxLength:MAXPATHLEN encoding:NSUTF8StringEncoding];
-		UIAlertSheet *sheet = [ [ UIAlertSheet alloc ] initWithFrame: 
-		    CGRectMake(0, 240, 320, 240) ];
+		//fileからZIPファイルパスを取得し、アラート表示する
+		[file getCString: NowFilePath maxLength:MAXPATHLEN encoding:NSUTF8StringEncoding];
+		UIAlertSheet *sheet = [ [ UIAlertSheet alloc ] initWithFrame: CGRectMake(0, 240, 320, 240) ];
 		[ sheet setTitle: file ];
-		[ sheet setBodyText: NSLocalizedString(@"Select action", nil)];
-		[ sheet addButtonWithTitle: NSLocalizedString(@"Start with saved position", nil)];
-		[ sheet addButtonWithTitle: NSLocalizedString(@"Start new book", nil)];
-		[ sheet addButtonWithTitle: NSLocalizedString(@"Page List", nil)];
-		[ sheet addButtonWithTitle: NSLocalizedString(@"Cancel", nil)];
-
+		[ sheet setBodyText: NSLocalizedString(@"Select action", nil) ];
+		[ sheet addButtonWithTitle: NSLocalizedString(@"Start with saved position", nil) ];
+		[ sheet addButtonWithTitle: NSLocalizedString(@"Start new book", nil) ];
+		[ sheet addButtonWithTitle: NSLocalizedString(@"Page List", nil) ];
+		[ sheet addButtonWithTitle: NSLocalizedString(@"Cancel", nil) ];
 		[ sheet setDelegate: self ];
 		[ sheet presentSheetFromAboveView: _currentBrowser ];
-        }
+		tmpAlertSheetId = 2;
+	}
 }
 
+/******************************/
+/* アラート表示               */
+/******************************/
 - (void)alertSheet:(UIAlertSheet *)sheet buttonClicked:(int)button 
 {
-	[ sheet dismiss ];
-	char buf[MAXPATHLEN];
-	if(button == 1)
-	{
-		PageData pd = GetPageData(tmpfilename);
-		[_imageview setFile: [NSString stringWithCString:tmpfilename encoding:NSUTF8StringEncoding]];
-		[_imageview setPage:pd.page];
-		[_imageview reloadFile];
-		[_imageview fitImage];
-		[_transition transition: 1 toView:_imageview];
-		IsViewingComic = 1;
-		return;	
-	}
-	else if(button == 2)
-	{
-		[_imageview setFile: [NSString stringWithCString:tmpfilename encoding:NSUTF8StringEncoding]];
-		if([_imageview reloadFile] == 1)
-		{
-			[_imageview nextFile];
-		}
-		[_imageview fitImage];
-		[_transition transition: 1 toView:_imageview];
-		IsViewingComic = 1;
-		return;
-	}
-	else if(button == 3)
-	{
+	PageData pd;
+	UINavigationItem *navItem;
 
-		UINavigationItem *navItem;
-		navItem = [[UINavigationItem alloc] initWithTitle: [[NSString stringWithCString:tmpfilename encoding:NSUTF8StringEncoding] lastPathComponent]];
-		[_navbar pushNavigationItem: navItem];
-		
-		[_tabletransition transition:1 toView: _currentBrowser];
-		[_zbrowser setPath: [NSString stringWithCString:tmpfilename encoding:NSUTF8StringEncoding]];
-		[_zbrowser reloadData];
-		[_tabletransition transition: 1 toView: _zbrowser];
+	[ sheet dismiss ];
+
+	switch(tmpAlertSheetId){
+	case 1:
+		switch(button){
+		case 1:		//Start with saved position
+			if( strlen(tmpFile) > 0 ){
+				pd = GetPageData(tmpFile);
+				[_imageview setFile: [NSString stringWithCString:tmpFile encoding:NSUTF8StringEncoding]];
+				[_imageview setPage:pd.page];
+				[_imageview reloadFile];
+				[_imageview fitImage];
+				[_transition transition: 1 toView:_imageview];
+				IsViewingComic = 1;
+			}
+			break;
+		case 2:		//Settings
+			//設定画面を表示する
+			[_transition transition: 0 toView: _prefsview];
+			break;
+		default:
+			break;
+		}
+		break;
+	case 2:
+		switch(button){
+		case 1:		//Start with saved position
+			strcpy(tmpFile, NowFilePath);
+			pd = GetPageData(NowFilePath);
+			[_imageview setFile: [NSString stringWithCString:NowFilePath encoding:NSUTF8StringEncoding]];
+			[_imageview setPage:pd.page];
+			[_imageview reloadFile];
+			[_imageview fitImage];
+			[_transition transition: 1 toView:_imageview];
+			IsViewingComic = 1;
+			break;
+		case 2:		//Start new book
+			strcpy(tmpFile, NowFilePath);
+			[_imageview setFile: [NSString stringWithCString:NowFilePath encoding:NSUTF8StringEncoding]];
+			if([_imageview reloadFile] == 1){
+				[_imageview nextFile];
+			}
+			[_imageview fitImage];
+			[_transition transition: 1 toView:_imageview];
+			IsViewingComic = 1;
+			break;
+		case 3:		//Page List
+			navItem = [[UINavigationItem alloc] initWithTitle: [[NSString stringWithCString:NowFilePath encoding:NSUTF8StringEncoding] lastPathComponent]];
+			[_navbar pushNavigationItem: navItem];
+			
+			[_tabletransition transition:1 toView: _currentBrowser];
+			[_zbrowser setPath: [NSString stringWithCString:NowFilePath encoding:NSUTF8StringEncoding]];
+			[_zbrowser reloadData];
+			[_tabletransition transition: 1 toView: _zbrowser];
+			tmpAlertDispId = 2;
+			break;
+		}
+		break;
+	case 3:
+		switch(button){
+		case 1:		//Settings
+			//設定画面を表示する
+			[_transition transition: 0 toView: _prefsview];
+			break;
+		}
+		break;
+	default:
+		break;
 	}
 }
 
