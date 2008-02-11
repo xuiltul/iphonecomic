@@ -3,22 +3,19 @@
 #define UITEXTLEN 1000
 
 #ifdef MOBILE
+	#define COMICVER @"iComic v0.8m"
 	#define COMICPATH2 "/var/mobile/Media/Comic/"
+	#define COMICPATHLEN 24
 #else
+	#define COMICVER @"iComic v0.8r"
 	#define COMICPATH2 "/var/root/Media/Comic/"
+	#define COMICPATHLEN 22
 #endif
 
 #define COMICPATH @COMICPATH2
-#define COMICPATHLEN 22
 #define MAXPATHLEN 512
 #define MAXBOOKS 1000
 #define SCSTSBAR 20			//ステータスバーの高さ
-
-#ifdef MOBILE
-	#define COMICVER @"iComic v0.8m"
-#else
-	#define COMICVER @"iComic v0.8r"
-#endif
 
 #define SOUND_CLICK if(prefData.SoundOn) AudioServicesPlaySystemSound(1105)
 
