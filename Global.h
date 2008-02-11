@@ -20,6 +20,8 @@
 	#define COMICVER @"iComic v0.8r"
 #endif
 
+#define SOUND_CLICK if(prefData.SoundOn) AudioServicesPlaySystemSound(1105)
+
 //#define MAKEUITEXT(a) [NSString stringWithCString: UIText[a] encoding:NSUTF8StringEncoding]
 
 //
@@ -35,6 +37,7 @@ typedef struct PageDataS{
 //環境定義を保存する
 typedef struct PrefDataS{
 	int		Ver;
+//v1
 	BOOL	IsScroll;			//Bounce
 	int		ScrollSpeed;		//Scroll speed
 	BOOL	ToScrollRightTop;	//Move to top right
@@ -47,6 +50,9 @@ typedef struct PrefDataS{
 	BOOL	GravitySlide;		//Gravity page slide
 	BOOL	ButtonSlide;		//Button page slide
 	BOOL	SwipeSlide;			//Swipe page slide
+//v2
+	BOOL	SoundOn;			//Sound On
+	BOOL	SlideRignt;			//Slide to right
 }PrefData;
 
 extern PrefData prefData;

@@ -164,20 +164,21 @@ void SetPageData(char* fname, int page)
 //定義の初期設定
 void InitPrefs()
 {
-	prefData.Ver=1;
-	prefData.IsScroll			= YES;
+	prefData.Ver=2;
+	prefData.IsScroll			= YES;	// バウンズ
 	prefData.ScrollSpeed		= 85;	// スクロールの速さ
 	prefData.ToScrollRightTop	= YES;	// 次ページで右上に行く
 	prefData.ToKeepScale		= YES;	// 拡大率を維持
 	prefData.LBtnIsNext			= NO;	// 左ボタンで次のページ
 	prefData.HitRange			= 60;	// 角判定の大きさ
 	prefData.HideStatusbar		= YES;	// ステータスバー
-//	prefData.ToResizeImage		= YES;	// リサイズ
 	prefData.ToFitScreen		= YES;	// リサイズ
 	prefData.Rotation			= 0;	// 回転(1-正面, 2-180°, 3-左, 4-右)
 	prefData.GravitySlide		= NO;	// 重力ページめくり
 	prefData.ButtonSlide		= YES;	// ボタンページめくり
 	prefData.SwipeSlide			= YES;	// スワイプページめくり
+	prefData.SoundOn			= NO;	// サウンド
+	prefData.SlideRignt			= YES;	// 右にスライド
 }
 
 //定義情報の読み込み
@@ -193,6 +194,12 @@ void LoadPref()
 		memset(&prefData, 0x00, sizeof(prefData));
 		InitPrefs();
 	}
+	//Ver1の場合、Ver2で追加になっている項目を初期化する
+	if(prefData.Ver==1){
+		prefData.SoundOn			= NO;	// サウンド
+		prefData.SlideRignt			= YES;	// 右にスライド
+	}
+	prefData.Ver=2;	//最新版数
 }
 
 //定義情報の書き込み

@@ -58,6 +58,8 @@
 	<string>画面サイズに最適化</string>
 	<key>Left button is next</key>
 	<string>左ボタンで次のページ</string>
+	<key>Sound On</key>
+	<string>サウンド</string>
 </dict>
 </plist>
 
