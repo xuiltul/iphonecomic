@@ -268,11 +268,11 @@ bool flag2 = false;
 		if( (prefData.ToKeepScale == YES) && (_currentsize > 0) ){
 			resizefit.width *= _currentsize;
 			resizefit.height *= _currentsize;
-			resize = [self resizeMaxImage: resizefit: true];
 		}
 		else{
 			_currentsize = 1;
 		}
+		resize = [self resizeMaxImage: resizefit: true];
 	}
 	else{
 		//画像が大きすぎる場合

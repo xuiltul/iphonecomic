@@ -494,13 +494,13 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 {
 	CGSize calcImage = CGSizeZero;
 	bool isVert = (oImage.width < oImage.height);
+	float aspect = oImage.height / oImage.width;
 
 	switch(_orient){
 	case 1:		//正面 0°
 	case 2:		//180°
 		//イメージが縦長の場合、画面一杯に合わせる
 		if(isVert){
-			float zoomRate;
 			float tmpZoomH = screct.size.height / oImage.height;
 			float tmpZoomW = screct.size.width / oImage.width;
 			//比率を見て、画面に近い場合は、一杯に引き伸ばす
@@ -510,12 +510,14 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 			}
 			else{
 				//ちょっと画面サイズから外れる場合は、長辺を合わせる
-				if(tmpZoomH > tmpZoomW)
-					zoomRate = tmpZoomW;
-				else
-					zoomRate = tmpZoomH;
-				calcImage.height *= zoomRate;
-				calcImage.width *= zoomRate;
+				if(tmpZoomW > tmpZoomH){
+					calcImage.height = screct.size.height;
+					calcImage.width = screct.size.height / aspect;
+				}
+				else{
+					calcImage.height = screct.size.width * aspect;
+					calcImage.width = screct.size.width;
+				}
 			}
 		}
 		//イメージが横長の場合、イメージの縦を合わせる
@@ -528,12 +530,12 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 	case 4:		//右 270°
 		//イメージが縦長の場合、イメージの横を合わせる
 		if(isVert){
-			calcImage.height = (oImage.height * screct.size.height) / oImage.width;
+			calcImage.height = screct.size.height * aspect;
 			calcImage.width = screct.size.height;
 		}
 		//イメージが横長の場合、イメージの横半分を丁度にする
 		else{
-			calcImage.height = (oImage.height * screct.size.height * 2) / oImage.width;
+			calcImage.height = screct.size.height * aspect * 2;
 			calcImage.width = screct.size.height * 2;
 		}
 		break;
