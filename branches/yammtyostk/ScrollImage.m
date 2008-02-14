@@ -18,7 +18,7 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 	//フルスクリーンの始点とサイズを取得する
 	screct = [UIHardware fullScreenApplicationContentRect];
 	screct.origin = CGPointZero;
-	screct.size.width++;	//横スクロール対策
+//	screct.size.width++;	//横スクロール対策
 
 	[super initWithFrame: frame];
 	_imagezoom = MIN_SCALE;			//ズーム倍率
@@ -248,6 +248,29 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 /******************************/
 - (void) scrollToTopRight
 {
+//NSLog(@"orient=%d, w=%f,h=%f", _orient, _imagesize.width,_imagesize.height);
+	CGPoint moveOffset;
+
+	//イメージのサイズにズーム倍率をかけて、イメージをスクロールする
+	switch(_orient){
+	case 1:		//正面 0°
+		moveOffset = CGPointMake(_imagesize.width - screct.size.width, 0);
+		break;
+	case 2:		//180°
+		moveOffset = CGPointMake(0, _imagesize.height - screct.size.height);
+		break;
+	case 3:		//左 90°
+		moveOffset = CGPointMake(_imagesize.height - screct.size.width, _imagesize.width - screct.size.height);
+		break;
+	case 4:		//右 270°
+	default:
+		moveOffset = CGPointMake(0, 0);
+		break;
+	}
+//NSLog(@"x=%f,y=%f",moveOffset.x, moveOffset.y);
+	[self setOffset:moveOffset];
+
+#if 0
 	//イメージのサイズにズーム倍率をかけて、イメージをスクロールする
 	switch(_orient){
 	case 1:		//正面 0°
@@ -264,6 +287,7 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 		[self setOffset: CGPointMake(0,0)];
 		break;
 	}
+#endif
 }
 
 /******************************/
@@ -403,10 +427,26 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 				//現在の2本指の距離を保存する
 				_fDistancePrev = fDistance;
 			}
+#if 0
+			CGSize org = _imagesize;
+			CGPoint pt = [self offset];
+#endif
 			_imagesize.width = _oimagesize.width * _imagezoom;
 			_imagesize.height = _oimagesize.height * _imagezoom;
 
 			[self resizeImage];
+#if 0
+			if( _isvert == true ){
+				pt.x += (_imagesize.width - org.width)/(1-(pt.x/(_imagesize.width-screct.size.width)));
+				pt.y += (_imagesize.height - org.height)/(1-(pt.y/(_imagesize.height-screct.size.height)));
+			}
+			else{
+				pt.y += (_imagesize.width - org.width)/(1-(pt.x/(_imagesize.width-screct.size.height)));
+				pt.x += (_imagesize.height - org.height)/(1-(pt.y/(_imagesize.height-screct.size.width)));
+			}
+
+			[self setOffset:pt];
+#endif
 		}
 		// ズームする場合はここで終了
 		if(_bZooming) return;
