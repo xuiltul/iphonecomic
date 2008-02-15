@@ -3,8 +3,8 @@
 #import "Global.h"
 
 #define MIN_SCALE (1.0f)
-#define MAX_SCALE (2.0f)
-#define ZOOM_RATE (0.004f)
+#define MAX_SCALE (4.0f)
+#define ZOOM_RATE (0.005f)
 
 #define NEXT_PAGE 1
 #define PREV_PAGE 2
@@ -18,7 +18,7 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 	//フルスクリーンの始点とサイズを取得する
 	screct = [UIHardware fullScreenApplicationContentRect];
 	screct.origin = CGPointZero;
-	screct.size.width++;	//横スクロール対策
+//	screct.size.width++;	//横スクロール対策
 
 	[super initWithFrame: frame];
 	_imagezoom = MIN_SCALE;			//ズーム倍率
@@ -248,6 +248,28 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 /******************************/
 - (void) scrollToTopRight
 {
+//NSLog(@"orient=%d, w=%f,h=%f", _orient, _imagesize.width,_imagesize.height);
+	CGPoint moveOffset;
+
+	switch(_orient){
+	case 1:		//正面 0°
+		moveOffset = CGPointMake(_imagesize.width - screct.size.width, 0);
+		break;
+	case 2:		//180°
+		moveOffset = CGPointMake(0, _imagesize.height - screct.size.height);
+		break;
+	case 3:		//左 90°
+		moveOffset = CGPointMake(_imagesize.height - screct.size.width, _imagesize.width - screct.size.height);
+		break;
+	case 4:		//右 270°
+	default:
+		moveOffset = CGPointMake(0, 0);
+		break;
+	}
+//NSLog(@"x=%f,y=%f",moveOffset.x, moveOffset.y);
+	[self setOffset:moveOffset];
+
+#if 0
 	//イメージのサイズにズーム倍率をかけて、イメージをスクロールする
 	switch(_orient){
 	case 1:		//正面 0°
@@ -264,6 +286,7 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 		[self setOffset: CGPointMake(0,0)];
 		break;
 	}
+#endif
 }
 
 /******************************/
@@ -274,9 +297,9 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 	return _imagezoom;
 }
 
-//******************************
-//* 画面をタッチした時の動作   *
-//******************************
+/******************************/
+/* 画面をタッチした時の動作   */
+/******************************/
 - (void)mouseDown:(GSEventRef)theEvent
 {
 	// DOWNイベントの座標を取得する
@@ -386,28 +409,65 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 		//2本指の距離を計算し、前回の距離との増分を出す。
 		float fDistance = sqrt( (pt2.x-pt1.x) * (pt2.x-pt1.x) + (pt2.y-pt1.y) * (pt2.y-pt1.y) );
 		float fHowFar = fDistance - _fDistancePrev;
-		//前回の距離との増分（絶対値）が3より大きい場合
-		if( 3 <  fabs(fHowFar) ){
-			//ズーム倍率を今回の増分だけ増減する
-			_imagezoom += ZOOM_RATE * fHowFar;
-			//ズームモードを有効にする
-			_bZooming = true;
-			//倍率が範囲を超える場合は、最大・最小値に設定
-			if( _imagezoom < MIN_SCALE ){
-				_imagezoom = MIN_SCALE;
-			}
-			else if( MAX_SCALE < _imagezoom ){
-				 _imagezoom = MAX_SCALE;
-			}
-			else{
-				//現在の2本指の距離を保存する
-				_fDistancePrev = fDistance;
-			}
-			_imagesize.width = _oimagesize.width * _imagezoom;
-			_imagesize.height = _oimagesize.height * _imagezoom;
 
-			[self resizeImage];
+		//ズーム倍率を今回の増分だけ増減する
+		_imagezoom += ZOOM_RATE * fHowFar;
+		//ズームモードを有効にする
+		_bZooming = true;
+		//倍率が範囲を超える場合は、最大・最小値に設定
+		if( _imagezoom < MIN_SCALE ){
+			_imagezoom = MIN_SCALE;
 		}
+		else if( MAX_SCALE < _imagezoom ){
+			 _imagezoom = MAX_SCALE;
+		}
+		else{
+			//現在の2本指の距離を保存する
+			_fDistancePrev = fDistance;
+		}
+		CGSize org = _imagesize;
+		CGPoint pt = [self offset];
+
+		//リサイズ
+		_imagesize.width = _oimagesize.width * _imagezoom;
+		_imagesize.height = _oimagesize.height * _imagezoom;
+		[self resizeImage];
+
+		//オフセット
+		if( _isvert == true ){
+			pt.x += (_imagesize.width - org.width) * ((pt.x + _centerpoint.x) / _imagesize.width);
+			if(pt.x < 0){
+				pt.x = 0;
+			}
+			else if( (_imagesize.width - pt.x) < screct.size.width ){
+				pt.x = _imagesize.width - screct.size.width;
+			}
+			pt.y += (_imagesize.height - org.height) * ((pt.y + _centerpoint.y) / _imagesize.height);
+			if(pt.y < 0){
+				pt.y = 0;
+			}
+			else if( (_imagesize.height - pt.y) < screct.size.height ){
+				pt.y = _imagesize.height - screct.size.height;
+			}
+		}
+		else{
+			pt.x += (_imagesize.height - org.height) * ((pt.x + _centerpoint.x) / _imagesize.height);
+			if(pt.x < 0){
+				pt.x = 0;
+			}
+			else if( (_imagesize.height - pt.x) < screct.size.width){
+				pt.x = _imagesize.height - screct.size.width;
+			}
+			pt.y += (_imagesize.width - org.width) * ((pt.y + _centerpoint.y) / _imagesize.width);
+			if(pt.y < 0){
+				pt.y = 0;
+			}
+			else if( (_imagesize.width - pt.y) < screct.size.height ){
+				pt.y = _imagesize.width - screct.size.height;
+			}
+		}
+		[self setOffset:pt];
+
 		// ズームする場合はここで終了
 		if(_bZooming) return;
 	}
