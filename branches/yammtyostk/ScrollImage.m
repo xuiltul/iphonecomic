@@ -427,26 +427,39 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 				//現在の2本指の距離を保存する
 				_fDistancePrev = fDistance;
 			}
-#if 0
 			CGSize org = _imagesize;
 			CGPoint pt = [self offset];
-#endif
+
 			_imagesize.width = _oimagesize.width * _imagezoom;
 			_imagesize.height = _oimagesize.height * _imagezoom;
 
 			[self resizeImage];
-#if 0
+
 			if( _isvert == true ){
-				pt.x += (_imagesize.width - org.width)/(1-(pt.x/(_imagesize.width-screct.size.width)));
-				pt.y += (_imagesize.height - org.height)/(1-(pt.y/(_imagesize.height-screct.size.height)));
+				pt.x += (_imagesize.width - org.width) * ((pt.x + _centerpoint.x) / _imagesize.width);
+				pt.y += (_imagesize.height - org.height) * ((pt.y + _centerpoint.y) / _imagesize.height);
 			}
 			else{
-				pt.y += (_imagesize.width - org.width)/(1-(pt.x/(_imagesize.width-screct.size.height)));
-				pt.x += (_imagesize.height - org.height)/(1-(pt.y/(_imagesize.height-screct.size.width)));
+				pt.x += (_imagesize.height - org.height) * ((pt.x + _centerpoint.x) / _imagesize.height);
+				pt.y += (_imagesize.width - org.width) * ((pt.y + _centerpoint.y) / _imagesize.width);
+			}
+
+			if(pt.x < 0) pt.x = 0;
+			if(pt.y < 0) pt.y = 0;
+			if( _isvert == true ){
+				if((_imagesize.width - pt.x)<screct.size.width) pt.x = _imagesize.width - screct.size.width;
+				if((_imagesize.height - pt.y)<screct.size.height) pt.y = _imagesize.height - screct.size.height;
+			}
+			else{
+				if((_imagesize.height - pt.x)<screct.size.width){
+					pt.x = _imagesize.height - screct.size.width;
+				}
+				if((_imagesize.width - pt.y)<screct.size.height){
+					pt.y = _imagesize.width - screct.size.height;
+				}
 			}
 
 			[self setOffset:pt];
-#endif
 		}
 		// ズームする場合はここで終了
 		if(_bZooming) return;
