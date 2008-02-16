@@ -18,7 +18,6 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 	//フルスクリーンの始点とサイズを取得する
 	screct = [UIHardware fullScreenApplicationContentRect];
 	screct.origin = CGPointZero;
-//	screct.size.width++;	//横スクロール対策
 
 	[super initWithFrame: frame];
 	_imagezoom = MIN_SCALE;			//ズーム倍率
@@ -139,14 +138,11 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 	}
 	else{
 		float zoomRate, tmpZoomH, tmpZoomW;
-		switch(_orient){
-		case 1:		//正面 0°
-		case 2:		//180°
+		if( _isvert == true ){
 			tmpZoomH = screct.size.height / _imagesize.height;
 			tmpZoomW = screct.size.width / _imagesize.width;
-			break;
-		case 3:		//左 90°
-		case 4:		//右 270°
+		}
+		else{
 			if( _imagesize.height > _imagesize.width ){
 				tmpZoomW = tmpZoomH = screct.size.height / _imagesize.width;
 			}
@@ -154,7 +150,6 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 				tmpZoomH = screct.size.height / _imagesize.width;
 				tmpZoomW = screct.size.width / _imagesize.height;
 			}
-			break;
 		}
 		if(tmpZoomH > tmpZoomW)
 			zoomRate = tmpZoomW;
@@ -248,7 +243,6 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 /******************************/
 - (void) scrollToTopRight
 {
-//NSLog(@"orient=%d, w=%f,h=%f", _orient, _imagesize.width,_imagesize.height);
 	CGPoint moveOffset;
 
 	switch(_orient){
@@ -266,27 +260,8 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 		moveOffset = CGPointMake(0, 0);
 		break;
 	}
-//NSLog(@"x=%f,y=%f",moveOffset.x, moveOffset.y);
-	[self setOffset:moveOffset];
 
-#if 0
-	//イメージのサイズにズーム倍率をかけて、イメージをスクロールする
-	switch(_orient){
-	case 1:		//正面 0°
-		[self scrollRectToVisible: CGRectMake( _imagesize.width, 0, 1, 1)];
-		break;
-	case 2:		//180°
-		[self setOffset: CGPointMake(0,0)];
-		break;
-	case 3:		//左 90°
-		[self scrollRectToVisible: CGRectMake( _imagesize.height, _imagesize.width, 1, 1)];
-		break;
-	case 4:		//右 270°
-	default:
-		[self setOffset: CGPointMake(0,0)];
-		break;
-	}
-#endif
+	[self setOffset:moveOffset];
 }
 
 /******************************/
@@ -436,37 +411,13 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 		//オフセット
 		if( _isvert == true ){
 			pt.x += (_imagesize.width - org.width) * ((pt.x + _centerpoint.x) / _imagesize.width);
-			if(pt.x < 0){
-				pt.x = 0;
-			}
-			else if( (_imagesize.width - pt.x) < screct.size.width ){
-				pt.x = _imagesize.width - screct.size.width;
-			}
 			pt.y += (_imagesize.height - org.height) * ((pt.y + _centerpoint.y) / _imagesize.height);
-			if(pt.y < 0){
-				pt.y = 0;
-			}
-			else if( (_imagesize.height - pt.y) < screct.size.height ){
-				pt.y = _imagesize.height - screct.size.height;
-			}
 		}
 		else{
 			pt.x += (_imagesize.height - org.height) * ((pt.x + _centerpoint.x) / _imagesize.height);
-			if(pt.x < 0){
-				pt.x = 0;
-			}
-			else if( (_imagesize.height - pt.x) < screct.size.width){
-				pt.x = _imagesize.height - screct.size.width;
-			}
 			pt.y += (_imagesize.width - org.width) * ((pt.y + _centerpoint.y) / _imagesize.width);
-			if(pt.y < 0){
-				pt.y = 0;
-			}
-			else if( (_imagesize.width - pt.y) < screct.size.height ){
-				pt.y = _imagesize.width - screct.size.height;
-			}
 		}
-		[self setOffset:pt];
+		[self setFitOffset:pt];
 
 		// ズームする場合はここで終了
 		if(_bZooming) return;
@@ -556,9 +507,7 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 	bool isVert = (oImage.width < oImage.height);
 	float aspect = oImage.height / oImage.width;
 
-	switch(_orient){
-	case 1:		//正面 0°
-	case 2:		//180°
+	if( _isvert == true ){
 		//イメージが縦長の場合、画面一杯に合わせる
 		if(isVert){
 			float tmpZoomH = screct.size.height / oImage.height;
@@ -585,9 +534,8 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 			calcImage.height = screct.size.height;
 			calcImage.width = oImage.width * screct.size.height / oImage.height;
 		}
-		break;
-	case 3:		//左 90°
-	case 4:		//右 270°
+	}
+	else{
 		//イメージが縦長の場合、イメージの横を合わせる
 		if(isVert){
 			calcImage.height = screct.size.height * aspect;
@@ -598,10 +546,40 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 			calcImage.height = screct.size.height * aspect * 2;
 			calcImage.width = screct.size.height * 2;
 		}
-		break;
 	}
-	
 	return calcImage;
+}
+
+/******************************/
+/* オフセット値を設定する     */
+/******************************/
+- (void) setFitOffset:(CGPoint)pt
+{
+	float image_w, image_h;
+	CGPoint ret = pt;
+
+	if( _isvert == true ){
+		image_w = _imagesize.width;
+		image_h = _imagesize.height;
+	}
+	else{
+		image_h = _imagesize.width;
+		image_w = _imagesize.height;
+	}
+	if(pt.x < 0){
+		ret.x = 0;
+	}
+	else if( (image_w - pt.x) < screct.size.width ){
+		ret.x = image_w - screct.size.width;
+	}
+	if(pt.y < 0){
+		ret.y = 0;
+	}
+	else if( (image_h - pt.y) < screct.size.height ){
+		ret.y = image_h - screct.size.height;
+	}
+
+	[self setOffset:ret];
 }
 
 @end

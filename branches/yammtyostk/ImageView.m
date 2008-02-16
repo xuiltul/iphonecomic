@@ -362,9 +362,9 @@ BOOL isDoing = NO;
 
 	if(prefData.ToScrollRightTop)
 		[_currentscroll scrollToTopRight];
-	else
-		[_currentscroll setOffset:pt];
-
+	else{
+		[_currentscroll setFitOffset:pt];
+	}
 	isDoing = NO;
 	return;
 }
@@ -412,9 +412,9 @@ BOOL isDoing = NO;
 
 	if(prefData.ToScrollRightTop)
 		[_currentscroll scrollToTopRight];
-	else
-		[_currentscroll setOffset:pt];
-
+	else{
+		[_currentscroll setFitOffset:pt];
+	}
 	isDoing = NO;
 	return;
 }
