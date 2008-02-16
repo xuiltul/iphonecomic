@@ -32,11 +32,11 @@ $(APPNAME):  $(FILES)
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
 clean:
-	rm -fr *.o $(APPNAME).app/$(APPNAME).mobile
+	rm -fr *.o $(APPNAME).app/$(APPNAME)
 
 package: $(APPNAME)
-	rm -fr $(APPNAME).app/$(APPNAME).mobile
-	mv $(APPNAME) $(APPNAME).app/$(APPNAME).mobile
+	rm -fr $(APPNAME).app/$(APPNAME)
+	mv $(APPNAME) $(APPNAME).app/$(APPNAME)
 
 debug: $(APPNAME) package
 
