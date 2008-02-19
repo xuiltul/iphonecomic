@@ -48,6 +48,5 @@
 - (void) setOrientation: (int) orientation animate:(bool)anime;
 - (void) goNextPage:(int) next;
 - (CGSize) calcFitImage:(CGSize) oImage;
-- (void) setFitOffset:(CGPoint) pt;
 
 @end
