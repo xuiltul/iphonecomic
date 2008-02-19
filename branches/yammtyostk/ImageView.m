@@ -413,7 +413,7 @@ BOOL isDoing = NO;
 	if(prefData.ToScrollRightTop)
 		[_currentscroll scrollToTopRight];
 	else{
-		[_currentscroll setFitOffset:pt];
+		[_currentscroll setOffset:pt];
 	}
 	isDoing = NO;
 	return;

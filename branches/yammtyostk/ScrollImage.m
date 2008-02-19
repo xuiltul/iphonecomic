@@ -417,7 +417,7 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 			pt.x += (_imagesize.height - org.height) * ((pt.x + _centerpoint.x) / _imagesize.height);
 			pt.y += (_imagesize.width - org.width) * ((pt.y + _centerpoint.y) / _imagesize.width);
 		}
-		[self setFitOffset:pt];
+		[self setOffset:pt];
 
 		// ズームする場合はここで終了
 		if(_bZooming) return;
@@ -553,19 +553,12 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 /******************************/
 /* オフセット値を設定する     */
 /******************************/
-- (void) setFitOffset:(CGPoint)pt
+- (void) setOffset:(CGPoint)pt
 {
-	float image_w, image_h;
 	CGPoint ret = pt;
+	float image_w	= (_isvert?	_imagesize.width:	_imagesize.height);
+	float image_h	= (_isvert?	_imagesize.height:	_imagesize.width);
 
-	if( _isvert == true ){
-		image_w = _imagesize.width;
-		image_h = _imagesize.height;
-	}
-	else{
-		image_h = _imagesize.width;
-		image_w = _imagesize.height;
-	}
 	if(pt.x < 0){
 		ret.x = 0;
 	}
@@ -578,8 +571,7 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 	else if( (image_h - pt.y) < screct.size.height ){
 		ret.y = image_h - screct.size.height;
 	}
-
-	[self setOffset:ret];
+	[super setOffset:ret];
 }
 
 @end
