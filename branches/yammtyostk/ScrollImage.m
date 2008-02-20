@@ -182,6 +182,7 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 - (void) resizeImage
 {
 	CGSize resizeTmp;
+
 	resizeTmp.width		= (_isvert?	_imagesize.width:	_imagesize.height);
 	resizeTmp.height	= (_isvert?	_imagesize.height:	_imagesize.width);
 

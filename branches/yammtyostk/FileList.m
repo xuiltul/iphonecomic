@@ -1,3 +1,4 @@
+#import "Global.h"
 #import "FileList.h"
 #import "zlib/unzip.h"
 #import <UIKit/UISimpleTableCell.h>
@@ -53,12 +54,15 @@
 /******************************/
 - (void)reloadData {
 	BOOL isDir;
+	int pagenum=0;
 
 	//まずは開いて初めのファイルへ.
 	char buf[MAXPATHLEN];
 	[_path getCString: buf maxLength:MAXPATHLEN encoding:NSUTF8StringEncoding];
 	unzFile zipfile = unzOpen(buf);
 	unzGoToFirstFile(zipfile);
+
+	PageData pd = GetPageData(buf);
 
 	//情報リストを作らないと。
 	int ret = 0;
@@ -77,7 +81,16 @@
 		NSString *temp = [NSString stringWithCString: buf encoding:NSShiftJISStringEncoding];
 //		NSLog(temp);
 		if(temp != nil){
-			[_files addObject:temp];
+			if(pd.page == pagenum){
+				NSString* temp2 = [temp stringByAppendingString:@" (@)"];
+				[_files addObject:temp2];
+//NSLog(temp2);
+			}
+			else{
+				[_files addObject:temp];
+//NSLog(temp);
+			}
+			pagenum++;
 		}
 		ret = unzGoToNextFile(zipfile);
 	}
