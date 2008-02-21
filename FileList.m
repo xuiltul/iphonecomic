@@ -54,7 +54,6 @@
 /******************************/
 - (void)reloadData {
 	BOOL isDir;
-	int pagenum=0;
 
 	//まずは開いて初めのファイルへ.
 	char buf[MAXPATHLEN];
@@ -81,23 +80,21 @@
 		NSString *temp = [NSString stringWithCString: buf encoding:NSShiftJISStringEncoding];
 //		NSLog(temp);
 		if(temp != nil){
-			if(pd.page == pagenum){
-				NSString* temp2 = [temp stringByAppendingString:@" (@)"];
-				[_files addObject:temp2];
-//NSLog(temp2);
-			}
-			else{
-				[_files addObject:temp];
-//NSLog(temp);
-			}
-			pagenum++;
+			[_files addObject:temp];
 		}
 		ret = unzGoToNextFile(zipfile);
 	}
 	
 	[_files sortUsingSelector: @selector (compare:)];
-
  	_rowCount = [_files count];
+
+	//しおり行にしるしをつける
+	if( (0 <= pd.page)&&(pd.page < _rowCount) ){
+		NSString* temp2 = [[_files objectAtIndex:pd.page] stringByAppendingString:@" (Now!!)"];
+//NSLog(temp2);
+		[_files replaceObjectAtIndex:pd.page withObject:temp2];
+	}
+
 	[_table reloadData];
 }
 
