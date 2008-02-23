@@ -451,20 +451,20 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 	int next=0;
 	switch(_orient){
 	case 1:		//正面 0°
-		if( orientation == 8 )		next = (prefData.SlideRignt? NEXT_PAGE: PREV_PAGE);
-		else if( orientation == 4 )	next = (prefData.SlideRignt? PREV_PAGE: NEXT_PAGE);
+		if( orientation == 8 )		next = (prefData.SlideRight? NEXT_PAGE: PREV_PAGE);
+		else if( orientation == 4 )	next = (prefData.SlideRight? PREV_PAGE: NEXT_PAGE);
 		break;
 	case 2:		//180°
-		if( orientation == 4 )		next = (prefData.SlideRignt? NEXT_PAGE: PREV_PAGE);
-		else if( orientation == 8 )	next = (prefData.SlideRignt? PREV_PAGE: NEXT_PAGE);
+		if( orientation == 4 )		next = (prefData.SlideRight? NEXT_PAGE: PREV_PAGE);
+		else if( orientation == 8 )	next = (prefData.SlideRight? PREV_PAGE: NEXT_PAGE);
 		break;
 	case 3:		//左 90°
-		if( orientation == 2 )		next = (prefData.SlideRignt? NEXT_PAGE: PREV_PAGE);
-		else if( orientation == 1 )	next = (prefData.SlideRignt? PREV_PAGE: NEXT_PAGE);
+		if( orientation == 2 )		next = (prefData.SlideRight? NEXT_PAGE: PREV_PAGE);
+		else if( orientation == 1 )	next = (prefData.SlideRight? PREV_PAGE: NEXT_PAGE);
 		break;
 	case 4:		//右 270°
-		if( orientation == 1 )		next = (prefData.SlideRignt? NEXT_PAGE: PREV_PAGE);
-		else if( orientation == 2 )	next = (prefData.SlideRignt? PREV_PAGE: NEXT_PAGE);
+		if( orientation == 1 )		next = (prefData.SlideRight? NEXT_PAGE: PREV_PAGE);
+		else if( orientation == 2 )	next = (prefData.SlideRight? PREV_PAGE: NEXT_PAGE);
 		break;
 	default:
 		break;
