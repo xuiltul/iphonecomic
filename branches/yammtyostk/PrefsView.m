@@ -77,7 +77,7 @@
 	_sliderigntcell = [[UIPreferencesControlTableCell alloc] initWithFrame:CGRectMake(0.0f, 0.0f, frame.size.width, 48.0f)];
 	[_sliderigntcell setTitle:NSLocalizedString(@"Slide to right", nil)];
 	UISwitchControl *sliderightSwitch = [[[UISwitchControl alloc] initWithFrame:CGRectMake(frame.size.width - 114.0, 11.0f, 114.0f, 48.0f)] autorelease];
-	[sliderightSwitch setValue:prefData.SlideRignt];
+	[sliderightSwitch setValue:prefData.SlideRight];
 	[_sliderigntcell setControl:sliderightSwitch];
 
 	//Scroll speed
@@ -205,7 +205,7 @@
 		prefData.ToScrollRightTop	= [[[_migicell control] valueForKey:@"value"] boolValue];
 		prefData.ToKeepScale		= [[[_scalecell control] valueForKey:@"value"] boolValue];
 		prefData.HideStatusbar		= [[[_statusbarcell control] valueForKey:@"value"] boolValue];
-		prefData.SlideRignt			= [[[_sliderigntcell control] valueForKey:@"value"] boolValue];
+		prefData.SlideRight			= [[[_sliderigntcell control] valueForKey:@"value"] boolValue];
 
 		prefData.LBtnIsNext			= [[[_leftbtncell control] valueForKey:@"value"] boolValue];
 		prefData.ToFitScreen		= [[[_fitscrcell control] valueForKey:@"value"] boolValue];
