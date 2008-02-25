@@ -338,16 +338,16 @@ BOOL isDoing = NO;
 	int trans = 0;
 	switch(_orient){
 	case 1:		//正面 0°
-		trans = (prefData.SlideRignt? 1: 2);
+		trans = (prefData.SlideRight? 1: 2);
 		break;
 	case 2:		//180°
-		trans = (prefData.SlideRignt? 2: 1);
+		trans = (prefData.SlideRight? 2: 1);
 		break;
 	case 3:		//左 90°
-		trans = (prefData.SlideRignt? 3: 7);
+		trans = (prefData.SlideRight? 3: 7);
 		break;
 	case 4:		//右 270°
-		trans = (prefData.SlideRignt? 7: 3);
+		trans = (prefData.SlideRight? 7: 3);
 		break;
 	}
 	[_transition transition:trans toView:_currentscroll];
@@ -362,9 +362,9 @@ BOOL isDoing = NO;
 
 	if(prefData.ToScrollRightTop)
 		[_currentscroll scrollToTopRight];
-	else
+	else{
 		[_currentscroll setOffset:pt];
-
+	}
 	isDoing = NO;
 	return;
 }
@@ -388,16 +388,16 @@ BOOL isDoing = NO;
 	int trans = 0;
 	switch(_orient){
 	case 1:		//正面 0°
-		trans = (prefData.SlideRignt? 2: 1);
+		trans = (prefData.SlideRight? 2: 1);
 		break;
 	case 2:		//180°
-		trans = (prefData.SlideRignt? 1: 2);
+		trans = (prefData.SlideRight? 1: 2);
 		break;
 	case 3:		//左 90°
-		trans = (prefData.SlideRignt? 7: 3);
+		trans = (prefData.SlideRight? 7: 3);
 		break;
 	case 4:		//右 270°
-		trans = (prefData.SlideRignt? 3: 7);
+		trans = (prefData.SlideRight? 3: 7);
 		break;
 	}
 	[_transition transition:trans toView:_currentscroll];
@@ -412,9 +412,9 @@ BOOL isDoing = NO;
 
 	if(prefData.ToScrollRightTop)
 		[_currentscroll scrollToTopRight];
-	else
+	else{
 		[_currentscroll setOffset:pt];
-
+	}
 	isDoing = NO;
 	return;
 }
