@@ -18,7 +18,6 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 	//フルスクリーンの始点とサイズを取得する
 	screct = [UIHardware fullScreenApplicationContentRect];
 	screct.origin = CGPointZero;
-//	screct.size.width++;	//横スクロール対策
 
 	[super initWithFrame: frame];
 	_imagezoom = MIN_SCALE;			//ズーム倍率
@@ -139,14 +138,11 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 	}
 	else{
 		float zoomRate, tmpZoomH, tmpZoomW;
-		switch(_orient){
-		case 1:		//正面 0°
-		case 2:		//180°
+		if( _isvert == true ){
 			tmpZoomH = screct.size.height / _imagesize.height;
 			tmpZoomW = screct.size.width / _imagesize.width;
-			break;
-		case 3:		//左 90°
-		case 4:		//右 270°
+		}
+		else{
 			if( _imagesize.height > _imagesize.width ){
 				tmpZoomW = tmpZoomH = screct.size.height / _imagesize.width;
 			}
@@ -154,7 +150,6 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 				tmpZoomH = screct.size.height / _imagesize.width;
 				tmpZoomW = screct.size.width / _imagesize.height;
 			}
-			break;
 		}
 		if(tmpZoomH > tmpZoomW)
 			zoomRate = tmpZoomW;
@@ -187,6 +182,7 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 - (void) resizeImage
 {
 	CGSize resizeTmp;
+
 	resizeTmp.width		= (_isvert?	_imagesize.width:	_imagesize.height);
 	resizeTmp.height	= (_isvert?	_imagesize.height:	_imagesize.width);
 
@@ -248,7 +244,6 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 /******************************/
 - (void) scrollToTopRight
 {
-//NSLog(@"orient=%d, w=%f,h=%f", _orient, _imagesize.width,_imagesize.height);
 	CGPoint moveOffset;
 
 	switch(_orient){
@@ -266,27 +261,8 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 		moveOffset = CGPointMake(0, 0);
 		break;
 	}
-//NSLog(@"x=%f,y=%f",moveOffset.x, moveOffset.y);
-	[self setOffset:moveOffset];
-
-#if 0
-	//イメージのサイズにズーム倍率をかけて、イメージをスクロールする
-	switch(_orient){
-	case 1:		//正面 0°
-		[self scrollRectToVisible: CGRectMake( _imagesize.width, 0, 1, 1)];
-		break;
-	case 2:		//180°
-		[self setOffset: CGPointMake(0,0)];
-		break;
-	case 3:		//左 90°
-		[self scrollRectToVisible: CGRectMake( _imagesize.height, _imagesize.width, 1, 1)];
-		break;
-	case 4:		//右 270°
-	default:
-		[self setOffset: CGPointMake(0,0)];
-		break;
-	}
-#endif
+// NSLog(@"moveOffset x=%f,y=%f", moveOffset.x, moveOffset.y);
+	[super setOffset:moveOffset];
 }
 
 /******************************/
@@ -319,9 +295,9 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 	[super mouseDown:theEvent];
 }
 
-//********************************
-//* 画面のタッチを離した時の動作 *
-//********************************
+/********************************/
+/* 画面のタッチを離した時の動作 */
+/********************************/
 - (void)mouseUp:(GSEventRef)theEvent
 {
 	int next=0, lt=0, lb=0, rt=0, rb=0, hit=0;
@@ -409,11 +385,15 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 		//2本指の距離を計算し、前回の距離との増分を出す。
 		float fDistance = sqrt( (pt2.x-pt1.x) * (pt2.x-pt1.x) + (pt2.y-pt1.y) * (pt2.y-pt1.y) );
 		float fHowFar = fDistance - _fDistancePrev;
+		float imagezoomPrev = _imagezoom;
 
+		//現在の2本指の距離を保存する
+		_fDistancePrev = fDistance;
 		//ズーム倍率を今回の増分だけ増減する
 		_imagezoom += ZOOM_RATE * fHowFar;
 		//ズームモードを有効にする
 		_bZooming = true;
+
 		//倍率が範囲を超える場合は、最大・最小値に設定
 		if( _imagezoom < MIN_SCALE ){
 			_imagezoom = MIN_SCALE;
@@ -421,55 +401,30 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 		else if( MAX_SCALE < _imagezoom ){
 			 _imagezoom = MAX_SCALE;
 		}
-		else{
-			//現在の2本指の距離を保存する
-			_fDistancePrev = fDistance;
+		//倍率が変わった場合リサイズ
+		if( imagezoomPrev != _imagezoom ){
+			CGSize org = _imagesize;
+			CGPoint pt = [self offset];
+			
+			//リサイズ
+			_imagesize.width = _oimagesize.width * _imagezoom;
+			_imagesize.height = _oimagesize.height * _imagezoom;
+			[self resizeImage];
+			
+			//オフセット
+			if( _isvert == true ){
+				pt.x += (_imagesize.width - org.width) * ((pt.x + _centerpoint.x) / _imagesize.width);
+				pt.y += (_imagesize.height - org.height) * ((pt.y + _centerpoint.y) / _imagesize.height);
+			}
+			else{
+				pt.x += (_imagesize.height - org.height) * ((pt.x + _centerpoint.x) / _imagesize.height);
+				pt.y += (_imagesize.width - org.width) * ((pt.y + _centerpoint.y) / _imagesize.width);
+			}
+			[self setOffset:pt];
+		
+			// ズームする場合はここで終了
+			if(_bZooming) return;
 		}
-		CGSize org = _imagesize;
-		CGPoint pt = [self offset];
-
-		//リサイズ
-		_imagesize.width = _oimagesize.width * _imagezoom;
-		_imagesize.height = _oimagesize.height * _imagezoom;
-		[self resizeImage];
-
-		//オフセット
-		if( _isvert == true ){
-			pt.x += (_imagesize.width - org.width) * ((pt.x + _centerpoint.x) / _imagesize.width);
-			if(pt.x < 0){
-				pt.x = 0;
-			}
-			else if( (_imagesize.width - pt.x) < screct.size.width ){
-				pt.x = _imagesize.width - screct.size.width;
-			}
-			pt.y += (_imagesize.height - org.height) * ((pt.y + _centerpoint.y) / _imagesize.height);
-			if(pt.y < 0){
-				pt.y = 0;
-			}
-			else if( (_imagesize.height - pt.y) < screct.size.height ){
-				pt.y = _imagesize.height - screct.size.height;
-			}
-		}
-		else{
-			pt.x += (_imagesize.height - org.height) * ((pt.x + _centerpoint.x) / _imagesize.height);
-			if(pt.x < 0){
-				pt.x = 0;
-			}
-			else if( (_imagesize.height - pt.x) < screct.size.width){
-				pt.x = _imagesize.height - screct.size.width;
-			}
-			pt.y += (_imagesize.width - org.width) * ((pt.y + _centerpoint.y) / _imagesize.width);
-			if(pt.y < 0){
-				pt.y = 0;
-			}
-			else if( (_imagesize.width - pt.y) < screct.size.height ){
-				pt.y = _imagesize.width - screct.size.height;
-			}
-		}
-		[self setOffset:pt];
-
-		// ズームする場合はここで終了
-		if(_bZooming) return;
 	}
 	//スクロールを実施する
 	[super mouseDragged:theEvent];
@@ -499,20 +454,20 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 	int next=0;
 	switch(_orient){
 	case 1:		//正面 0°
-		if( orientation == 8 )		next = (prefData.SlideRignt? NEXT_PAGE: PREV_PAGE);
-		else if( orientation == 4 )	next = (prefData.SlideRignt? PREV_PAGE: NEXT_PAGE);
+		if( orientation == 8 )		next = (prefData.SlideRight? NEXT_PAGE: PREV_PAGE);
+		else if( orientation == 4 )	next = (prefData.SlideRight? PREV_PAGE: NEXT_PAGE);
 		break;
 	case 2:		//180°
-		if( orientation == 4 )		next = (prefData.SlideRignt? NEXT_PAGE: PREV_PAGE);
-		else if( orientation == 8 )	next = (prefData.SlideRignt? PREV_PAGE: NEXT_PAGE);
+		if( orientation == 4 )		next = (prefData.SlideRight? NEXT_PAGE: PREV_PAGE);
+		else if( orientation == 8 )	next = (prefData.SlideRight? PREV_PAGE: NEXT_PAGE);
 		break;
 	case 3:		//左 90°
-		if( orientation == 2 )		next = (prefData.SlideRignt? NEXT_PAGE: PREV_PAGE);
-		else if( orientation == 1 )	next = (prefData.SlideRignt? PREV_PAGE: NEXT_PAGE);
+		if( orientation == 2 )		next = (prefData.SlideRight? NEXT_PAGE: PREV_PAGE);
+		else if( orientation == 1 )	next = (prefData.SlideRight? PREV_PAGE: NEXT_PAGE);
 		break;
 	case 4:		//右 270°
-		if( orientation == 1 )		next = (prefData.SlideRignt? NEXT_PAGE: PREV_PAGE);
-		else if( orientation == 2 )	next = (prefData.SlideRignt? PREV_PAGE: NEXT_PAGE);
+		if( orientation == 1 )		next = (prefData.SlideRight? NEXT_PAGE: PREV_PAGE);
+		else if( orientation == 2 )	next = (prefData.SlideRight? PREV_PAGE: NEXT_PAGE);
 		break;
 	default:
 		break;
@@ -556,9 +511,7 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 	bool isVert = (oImage.width < oImage.height);
 	float aspect = oImage.height / oImage.width;
 
-	switch(_orient){
-	case 1:		//正面 0°
-	case 2:		//180°
+	if( _isvert == true ){
 		//イメージが縦長の場合、画面一杯に合わせる
 		if(isVert){
 			float tmpZoomH = screct.size.height / oImage.height;
@@ -585,9 +538,8 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 			calcImage.height = screct.size.height;
 			calcImage.width = oImage.width * screct.size.height / oImage.height;
 		}
-		break;
-	case 3:		//左 90°
-	case 4:		//右 270°
+	}
+	else{
 		//イメージが縦長の場合、イメージの横を合わせる
 		if(isVert){
 			calcImage.height = screct.size.height * aspect;
@@ -598,10 +550,59 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 			calcImage.height = screct.size.height * aspect * 2;
 			calcImage.width = screct.size.height * 2;
 		}
-		break;
 	}
-	
 	return calcImage;
+}
+
+/******************************/
+/* オフセット値を設定する     */
+/******************************/
+- (void) setOffset:(CGPoint)pt
+{
+	CGPoint ret = pt;
+	float image_w	= (_isvert?	_imagesize.width:	_imagesize.height);
+	float image_h	= (_isvert?	_imagesize.height:	_imagesize.width);
+
+	if( image_w  < screct.size.width ){
+		switch(_orient){
+		case 1:		//正面 0°
+		case 3:		//左 90°
+			ret.x = image_w - screct.size.width;
+			break;
+		case 2:		//180°
+		case 4:		//右 270°
+		default:
+			ret.x = 0;
+			break;
+		}
+	}
+	else if(pt.x < 0){
+		ret.x = 0;
+	}
+	else if( (image_w - pt.x) < screct.size.width ){
+		ret.x = image_w - screct.size.width;
+	}
+
+	if( image_h  < screct.size.height ){
+		switch(_orient){
+		case 1:		//正面 0°
+		case 4:		//右 270°
+			ret.y = 0;
+			break;
+		case 2:		//180°
+		case 3:		//左 90°
+		default:
+			ret.y = image_h - screct.size.height;
+			break;
+		}
+	}
+	else if(pt.y < 0){
+		ret.y = 0;
+	}
+	else if( (image_h - pt.y) < screct.size.height ){
+		ret.y = image_h - screct.size.height;
+	}
+	[super setOffset:ret];
 }
 
 @end

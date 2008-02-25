@@ -49,7 +49,7 @@ typedef struct PrefDataS{
 	BOOL	SwipeSlide;			//Swipe page slide
 //v2
 	BOOL	SoundOn;			//Sound On
-	BOOL	SlideRignt;			//Slide to right
+	BOOL	SlideRight;			//Slide to right
 }PrefData;
 
 extern PrefData prefData;

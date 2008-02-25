@@ -57,8 +57,9 @@ PageData GetPageData(char *fname)
 			return pageData[i];
 		}
 	}
-	//無かった場合は０で新規作成
-	dummy.page = dummy.crc = 0;
+	//無かった場合は新規作成
+	dummy.crc = 0;
+	dummy.page = -2;
 	return dummy;
 }
 
@@ -178,7 +179,7 @@ void InitPrefs()
 	prefData.ButtonSlide		= YES;	// ボタンページめくり
 	prefData.SwipeSlide			= YES;	// スワイプページめくり
 	prefData.SoundOn			= NO;	// サウンド
-	prefData.SlideRignt			= YES;	// 右にスライド
+	prefData.SlideRight			= YES;	// 右にスライド
 }
 
 //定義情報の読み込み
@@ -197,7 +198,7 @@ void LoadPref()
 	//Ver1の場合、Ver2で追加になっている項目を初期化する
 	if(prefData.Ver==1){
 		prefData.SoundOn			= NO;	// サウンド
-		prefData.SlideRignt			= YES;	// 右にスライド
+		prefData.SlideRight			= YES;	// 右にスライド
 	}
 	prefData.Ver=2;	//最新版数
 }

@@ -1,3 +1,4 @@
+#import "Global.h"
 #import "FileList.h"
 #import "zlib/unzip.h"
 #import <UIKit/UISimpleTableCell.h>
@@ -60,6 +61,8 @@
 	unzFile zipfile = unzOpen(buf);
 	unzGoToFirstFile(zipfile);
 
+	PageData pd = GetPageData(buf);
+
 	//情報リストを作らないと。
 	int ret = 0;
 	unz_global_info ugi;
@@ -83,8 +86,15 @@
 	}
 	
 	[_files sortUsingSelector: @selector (compare:)];
-
  	_rowCount = [_files count];
+
+	//しおり行にしるしをつける
+	if( (0 <= pd.page)&&(pd.page < _rowCount) ){
+		NSString* temp2 = [[_files objectAtIndex:pd.page] stringByAppendingString:@" (Now!!)"];
+//NSLog(temp2);
+		[_files replaceObjectAtIndex:pd.page withObject:temp2];
+	}
+
 	[_table reloadData];
 }
 
