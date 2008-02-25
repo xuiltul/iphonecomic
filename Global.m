@@ -57,8 +57,9 @@ PageData GetPageData(char *fname)
 			return pageData[i];
 		}
 	}
-	//無かった場合は０で新規作成
-	dummy.page = dummy.crc = 0;
+	//無かった場合は新規作成
+	dummy.crc = 0;
+	dummy.page = -2;
 	return dummy;
 }
 
