@@ -3,11 +3,11 @@
 #define UITEXTLEN 1000
 
 #ifdef MOBILE
-	#define COMICVER @"iComic v009m"
+	#define COMICVER @"iComic v010m"
 	#define COMICPATH2 "/var/mobile/Media/Comic/"
 	#define COMICPATHLEN 24
 #else
-	#define COMICVER @"iComic v009r"
+	#define COMICVER @"iComic v010r"
 	#define COMICPATH2 "/var/root/Media/Comic/"
 	#define COMICPATHLEN 22
 #endif
