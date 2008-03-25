@@ -54,6 +54,9 @@
 	return self;
 }
 
+/******************************/
+/*                            */
+/******************************/
 - (void)dealloc {
 	[_path release];
 	[_files release];
@@ -63,10 +66,16 @@
 	[super dealloc];
 }
 
+/******************************/
+/*                            */
+/******************************/
 - (NSString *)path {
 	return [[_path retain] autorelease];
 }
 
+/******************************/
+/*                            */
+/******************************/
 - (void)setPath: (NSString *)path {
 	[_path release];
 	_path = [path copy];
@@ -74,16 +83,25 @@
 	[self reloadData];
 }
 
+/******************************/
+/*                            */
+/******************************/
 - (void)addExtension: (NSString *)extension {
 	if (![_extensions containsObject:[extension lowercaseString]]) {
 		[_extensions addObject: [extension lowercaseString]];
 	}
 }
 
+/******************************/
+/*                            */
+/******************************/
 - (void)setExtensions: (NSArray *)extensions {
 	[_extensions setArray: extensions];
 }
 
+/******************************/
+/*                            */
+/******************************/
 - (void)reloadData {
         BOOL isDir;
 	NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -92,19 +110,28 @@
 	if ([fileManager fileExistsAtPath: _path] == NO) {
 		return;
 	}
+	NSString *file;
+	NSMutableString *title;
 
 	[_files removeAllObjects];
 
-	NSString *file;
 	NSEnumerator *dirEnum = [tempArray objectEnumerator];
 	while (file = [dirEnum nextObject]) {
 		if (_extensions != nil && [_extensions count] > 0) {
 			NSString *extension = [[file pathExtension] lowercaseString];
 			if ([_extensions containsObject: extension]) {
-				[_files addObject: file];
+//				[_files addObject: file];
+				
+				title = [NSMutableString stringWithString:file];
+				CFStringNormalize((CFMutableStringRef)title, kCFStringNormalizationFormC);
+				[_files addObject:title];
 			}
 		}else{
-			[_files addObject: file];
+//			[_files addObject: file];
+
+			title = [NSMutableString stringWithString:file];
+			CFStringNormalize((CFMutableStringRef)title, kCFStringNormalizationFormC);
+			[_files addObject:title];
 		}
  	}
 
@@ -112,12 +139,20 @@
 	_rowCount = [_files count];
 	[_table reloadData];
 	[tempArray release];
+	
+	[[_table cellAtRow:[_table selectedRow]column:0] setSelected:FALSE withFade:FALSE];
 }
 
+/******************************/
+/*                            */
+/******************************/
 - (void)setDelegate:(id)delegate {
 	_delegate = delegate;
 }
 
+/******************************/
+/*                            */
+/******************************/
 - (int)numberOfRowsInTable:(UITable *)table {
 	return _rowCount;
 }
@@ -201,12 +236,18 @@
 	return cell;
 }
 
+/******************************/
+/*                            */
+/******************************/
 - (void)tableRowSelected:(NSNotification *)notification {
 //	NSLog([self selectedFile]);
 	if( [_delegate respondsToSelector:@selector( fileBrowser:fileSelected: )] )
 		[_delegate fileBrowser:self fileSelected:[self selectedFile]];
 }
 
+/******************************/
+/*                            */
+/******************************/
 - (NSString *)selectedFile {
 	if ([_table selectedRow] == -1)
 		return nil;
