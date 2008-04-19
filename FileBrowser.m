@@ -20,7 +20,6 @@
 #import "zlib/unzip.h"
 #import "Global.h"
 #import <UIKit/UISimpleTableCell.h>
-#define MAXPATHLEN 512
 
 @implementation FileBrowser 
 - (id)initWithFrame:(struct CGRect)frame{
@@ -39,6 +38,7 @@
 
 		_extensions = [[NSMutableArray alloc] init];
 		_files = [[NSMutableArray alloc] init];
+		_fileview = [[NSMutableArray alloc] init];
 		_rowCount = 0;
 
 		_delegate = nil;
@@ -61,6 +61,7 @@
 	[_path release];
 	[_files release];
 	[_extensions release];
+	[_fileview release];
 	[_table release];
 	_delegate = nil;
 	[super dealloc];
@@ -102,40 +103,44 @@
 /******************************/
 /*                            */
 /******************************/
-- (void)reloadData {
-        BOOL isDir;
+- (void)reloadData
+{
+	BOOL isDir;
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	NSArray *tempArray = [[NSArray alloc] initWithArray:[fileManager directoryContentsAtPath:_path]];
 
-	if ([fileManager fileExistsAtPath: _path] == NO) {
+	if ([fileManager fileExistsAtPath:_path] == NO){
 		return;
 	}
 	NSString *file;
 	NSMutableString *title;
 
 	[_files removeAllObjects];
+	[_fileview removeAllObjects];
 
 	NSEnumerator *dirEnum = [tempArray objectEnumerator];
 	while (file = [dirEnum nextObject]) {
 		if (_extensions != nil && [_extensions count] > 0) {
 			NSString *extension = [[file pathExtension] lowercaseString];
-			if ([_extensions containsObject: extension]) {
-//				[_files addObject: file];
+			if ([_extensions containsObject:extension]) {
+				[_files addObject: file];
 				
 				title = [NSMutableString stringWithString:file];
 				CFStringNormalize((CFMutableStringRef)title, kCFStringNormalizationFormC);
-				[_files addObject:title];
+//				[_files addObject:title];
+				[_fileview addObject:title];
 			}
 		}else{
-//			[_files addObject: file];
+			[_files addObject: file];
 
 			title = [NSMutableString stringWithString:file];
 			CFStringNormalize((CFMutableStringRef)title, kCFStringNormalizationFormC);
-			[_files addObject:title];
+//			[_files addObject:title];
+			[_fileview addObject:title];
 		}
  	}
 
-	//[_files sortUsingSelector:@selector(caseInsensitiveCompare:)];
+//	[_files sortUsingSelector:@selector(caseInsensitiveCompare:)];
 	_rowCount = [_files count];
 	[_table reloadData];
 	[tempArray release];
@@ -165,12 +170,12 @@
 	char buf0[MAXPATHLEN];
 	
 	UIImageAndTextTableCell *cell = [[UIImageAndTextTableCell alloc] init];
-	[cell setTitle: [[_files objectAtIndex: row] stringByDeletingPathExtension]];
+//	[cell setTitle: [[_files objectAtIndex: row] stringByDeletingPathExtension]];
+	[cell setTitle: [[_fileview objectAtIndex: row] stringByDeletingPathExtension]];
 	NSString* path0 = [_path copy];
 	if([_path characterAtIndex: [_path length] - 1] != '/'){
 		path0 = [_path stringByAppendingString: @"/"];
 	}
-
 	NSString *file = [path0 stringByAppendingString:[_files objectAtIndex:row]];
 //	NSLog(file);
 	//ディレクトリの場合
@@ -220,7 +225,7 @@
 	}
 	//ZIPファイルの場合
 	else{
-		[file getCString: buf0 maxLength:MAXPATHLEN encoding:NSUTF8StringEncoding];
+		[file getCString:buf0 maxLength:MAXPATHLEN encoding:NSUTF8StringEncoding];
 		int t = GetPageData(buf0).page;
 		if(t == -1)
 			[cell setImage: _booksf];
@@ -248,12 +253,15 @@
 /******************************/
 /*                            */
 /******************************/
-- (NSString *)selectedFile {
+- (NSString *)selectedFile
+{
 	if ([_table selectedRow] == -1)
 		return nil;
 //	NSLog(@"here!");
 	return [_path stringByAppendingPathComponent: [_files objectAtIndex: [_table selectedRow]]];
 }
+
+
 @end
 
 
