@@ -344,10 +344,15 @@ void initialize(int hz) {
 	//ZIPファイルの時
 	else{
 //		NSLog(@"file");
+		NSMutableString *title;
+
 		//fileからZIPファイルパスを取得し、アラート表示する
 		[file getCString: NowFilePath maxLength:MAXPATHLEN encoding:NSUTF8StringEncoding];
+		title = [NSMutableString stringWithString:file];
+		CFStringNormalize((CFMutableStringRef)title, kCFStringNormalizationFormC);
 		UIAlertSheet *sheet = [ [ UIAlertSheet alloc ] initWithFrame: CGRectMake(0, 240, 320, 240) ];
-		[ sheet setTitle: file ];
+//		[ sheet setTitle: file ];
+		[ sheet setTitle: title ];
 		[ sheet setBodyText: NSLocalizedString(@"Select action", nil) ];
 		[ sheet addButtonWithTitle: NSLocalizedString(@"Start with saved position", nil) ];
 		[ sheet addButtonWithTitle: NSLocalizedString(@"Start new book", nil) ];
@@ -414,14 +419,22 @@ void initialize(int hz) {
 			IsViewingComic = 1;
 			break;
 		case 3:		//Page List
-			navItem = [[UINavigationItem alloc] initWithTitle: [[NSString stringWithCString:NowFilePath encoding:NSUTF8StringEncoding] lastPathComponent]];
-			[_navbar pushNavigationItem: navItem];
-			
-			[_tabletransition transition:1 toView: _currentBrowser];
-			[_zbrowser setPath: [NSString stringWithCString:NowFilePath encoding:NSUTF8StringEncoding]];
-			[_zbrowser reloadData];
-			[_tabletransition transition: 1 toView: _zbrowser];
-			tmpAlertDispId = 2;
+			{
+				NSMutableString *title;
+				title = [NSMutableString
+							stringWithString:[[NSString stringWithCString:NowFilePath
+															encoding:NSUTF8StringEncoding] lastPathComponent]];
+				CFStringNormalize((CFMutableStringRef)title, kCFStringNormalizationFormC);
+//				navItem = [[UINavigationItem alloc] initWithTitle: [[NSString stringWithCString:NowFilePath encoding:NSUTF8StringEncoding] lastPathComponent]];
+				navItem = [[UINavigationItem alloc] initWithTitle:title];
+				[_navbar pushNavigationItem: navItem];
+				
+				[_tabletransition transition:1 toView: _currentBrowser];
+				[_zbrowser setPath: [NSString stringWithCString:NowFilePath encoding:NSUTF8StringEncoding]];
+				[_zbrowser reloadData];
+				[_tabletransition transition: 1 toView: _zbrowser];
+				tmpAlertDispId = 2;
+			}
 			break;
 		}
 		break;

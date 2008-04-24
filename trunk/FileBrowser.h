@@ -23,6 +23,7 @@
 {
 	NSMutableArray *_extensions;
 	NSMutableArray *_files;
+	NSMutableArray *_fileview;
 	UITable *_table;
 	NSString *_path;
 	int _rowCount;

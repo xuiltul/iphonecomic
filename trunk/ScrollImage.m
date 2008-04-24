@@ -11,6 +11,8 @@
 #define EXIT_PAGE 3
 
 struct CGRect screct;		//フルスクリーンの始点とサイズを保持
+bool _bGoNext;				//ズームモード
+
 
 @implementation ScrollImage
 - (id)initWithFrame:(struct CGRect)frame
@@ -31,7 +33,7 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 	_matrixprev =	CGAffineTransformRotate(CGAffineTransformMakeScale(1, 1), 0 * M_PI / 180.0f);
 	_isvert = true;					//縦
 	_orient = 1;					//正面 0°
-	_bZooming = false;				//ズームモードを無効
+	_bGoNext = false;
 
 	[super setTapDelegate: self];
 	[super setGestureDelegate: self];
@@ -289,7 +291,6 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 		_fDistancePrev = sqrt((pt2.x-pt1.x)*(pt2.x-pt1.x) + (pt2.y-pt1.y)*(pt2.y-pt1.y));
 		// 2本指の中心点を中心点に設定する
 		_centerpoint = CGPointMake((pt1.x+pt2.x) / 2, (pt1.y+pt2.y) / 2);
-		_bZooming = true;
 	}
 
 	[super mouseDown:theEvent];
@@ -302,11 +303,14 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 {
 	int next=0, lt=0, lb=0, rt=0, rb=0, hit=0;
 
-	//ズームモードが有効な場合は、画面移動は無効
-	if( _bZooming == true ){
-		_bZooming = false;
+	//スクロールが有効な場合は、画面移動は無効
+	if( _bGoNext == true ){
+		_bGoNext = false;
+		[super mouseUp:theEvent];
 		return;
 	}
+	_bGoNext = false;
+
 	// 角判定の大きさを取得
 	hit = prefData.HitRange;
 	// UPイベントの座標を取得する
@@ -376,8 +380,13 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 /******************************/
 - (void)mouseDragged:(GSEventRef)theEvent
 {
+//NSLog(@"mouseDragged");
+	_bGoNext = true;
+
 	// 2本指でタッチ（ 0 = one finger down、1 = two fingers down ）
 	if ( GSEventIsChordingHandEvent(theEvent) ){
+//NSLog(@"mouseDragged 2 touch");
+
 		// タッチしている2つの座標を取得する。pt1、pt2
 		CGPoint pt1 = GSEventGetInnerMostPathPosition(theEvent);
 		CGPoint pt2 = GSEventGetOuterMostPathPosition(theEvent);
@@ -391,8 +400,6 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 		_fDistancePrev = fDistance;
 		//ズーム倍率を今回の増分だけ増減する
 		_imagezoom += ZOOM_RATE * fHowFar;
-		//ズームモードを有効にする
-		_bZooming = true;
 
 		//倍率が範囲を超える場合は、最大・最小値に設定
 		if( _imagezoom < MIN_SCALE ){
@@ -420,11 +427,10 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 				pt.x += (_imagesize.height - org.height) * ((pt.x + _centerpoint.x) / _imagesize.height);
 				pt.y += (_imagesize.width - org.width) * ((pt.y + _centerpoint.y) / _imagesize.width);
 			}
-			[self setOffset:pt];
-		
-			// ズームする場合はここで終了
-			if(_bZooming) return;
+			[self setOffsetFit:pt];
 		}
+		// ズームする場合はここで終了
+		return;
 	}
 	//スクロールを実施する
 	[super mouseDragged:theEvent];
@@ -557,8 +563,9 @@ struct CGRect screct;		//フルスクリーンの始点とサイズを保持
 /******************************/
 /* オフセット値を設定する     */
 /******************************/
-- (void) setOffset:(CGPoint)pt
+- (void) setOffsetFit:(CGPoint)pt
 {
+//NSLog(@"setOffsetFit");
 	CGPoint ret = pt;
 	float image_w	= (_isvert?	_imagesize.width:	_imagesize.height);
 	float image_h	= (_isvert?	_imagesize.height:	_imagesize.width);
