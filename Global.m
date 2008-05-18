@@ -11,6 +11,7 @@
 	#define COMIC_PAGE_PATH "/private/var/root/Library/iComic/Page.dat"
 #endif
 
+void MakeLibDir();
 unsigned crc_code(int, char *);
 void InitPrefs();
 void RefreshPageData();
@@ -19,12 +20,23 @@ void InitPageData();
 void FindFileRecursively(NSString*);
 
 //iComicに必要な定義情報
-int PagesCnt = 0;		//ページデータの情報数
+int PagesCnt;		//ページデータの情報数
 int IsViewingComic = 0;
 PrefData prefData;
 PageData pageData[MAXBOOKS];
 char PagesAccCnt[MAXBOOKS];
 char tmpFile[MAXPATHLEN];
+
+//定義情報格納ディレクトリ作成
+void MakeLibDir(void)
+{
+	NSFileManager *myFile = [NSFileManager defaultManager];
+
+//NSLog(@"MakeLibDir");
+//
+	if(![myFile fileExistsAtPath: DATA_DIR])
+		[myFile createDirectoryAtPath: DATA_DIR attributes:nil];
+}
 
 //CRCコードの生成
 unsigned crc_code(int len, char *data)
@@ -66,6 +78,7 @@ PageData GetPageData(char *fname)
 //ページデータの初期化
 void InitPageData()
 {
+	memset( PagesAccCnt, 0x00, sizeof(PagesAccCnt) );
 	FindFileRecursively(COMICPATH);
 	RefreshPageData();
 }
@@ -106,10 +119,11 @@ void FindFileRecursively(NSString* _path)
 void RefreshPageData()
 {
 	int i = 0 , j = 0;
+
 	for(i = PagesCnt - 1; i >= 0; i--){
 		//削除された
 		if(PagesAccCnt[i] == 0){
-			for(j = i; i < PagesCnt; i++){
+			for(j = i; j < PagesCnt; j++){
 				pageData[j] = pageData[j + 1];
 				if(pageData[j].crc == 0) break;
 			}
@@ -206,10 +220,7 @@ void LoadPref()
 //定義情報の書き込み
 void SavePref()
 {
-	NSFileManager *myFile = [NSFileManager defaultManager];
-
-	if(![myFile fileExistsAtPath: DATA_DIR])
-		[myFile createDirectoryAtPath: DATA_DIR attributes:nil];
+	MakeLibDir();
 
 	FILE* pfile = fopen(COMIC_PREF_PATH, "wb");
 	if(pfile != 0){
@@ -224,6 +235,8 @@ void LoadPage()
 	int i = 0;
 	FILE *pfile = fopen(COMIC_PAGE_PATH, "rb");
 	PagesCnt=0;
+
+	memset(pageData, 0x00, sizeof(pageData));
 	if(pfile != 0){
 		memset(tmpFile, 0x00, sizeof(tmpFile));
 		fread(&i, sizeof(i), 1, pfile);	//パスの長さ
@@ -249,10 +262,7 @@ void LoadPage()
 //ページデータの書き込み
 void SavePage()
 {
-	NSFileManager *myFile = [NSFileManager defaultManager];
-
-	if(![myFile fileExistsAtPath: DATA_DIR])
-		[myFile createDirectoryAtPath: DATA_DIR attributes:nil];
+	MakeLibDir();
 
 	int i = 0;
 	FILE* pfile = fopen(COMIC_PAGE_PATH, "wb");
