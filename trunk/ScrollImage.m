@@ -399,7 +399,8 @@ bool _bGoNext;				//ズームモード
 		//現在の2本指の距離を保存する
 		_fDistancePrev = fDistance;
 		//ズーム倍率を今回の増分だけ増減する
-		_imagezoom += ZOOM_RATE * fHowFar;
+//		_imagezoom += ZOOM_RATE * fHowFar;
+		_imagezoom += (ZOOM_RATE * fHowFar * _imagezoom);
 
 		//倍率が範囲を超える場合は、最大・最小値に設定
 		if( _imagezoom < MIN_SCALE ){
@@ -449,7 +450,7 @@ bool _bGoNext;				//ズームモード
 /******************************/
 - (BOOL)canHandleSwipes
 {
-	return prefData.SwipeSlide;
+	return (prefData.SwipeSlide && !_bGoNext);
 }
 
 /******************************/
