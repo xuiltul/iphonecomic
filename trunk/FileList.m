@@ -65,10 +65,14 @@
 
 	//情報リストを作らないと。
 	int ret = 0;
+	NSArray *extensions = [NSArray arrayWithObjects:@"jpe",@"jpg",@"jpeg",@"tif",@"tiff",@"png",@"gif",@"bmp",@"img",nil];
 	unz_global_info ugi;
 	unzGetGlobalInfo(zipfile, &ugi);
 
 //	NSLog(@"%d", ugi.number_entry);
+	if(_files != nil){
+		[_files release];
+	}
 	_files = [[NSMutableArray alloc] initWithCapacity: ugi.number_entry];
 	while(ret == 0){
 		unz_file_info ufi;
@@ -79,11 +83,21 @@
 		}
 		NSString *temp = [NSString stringWithCString: buf encoding:NSShiftJISStringEncoding];
 //		NSLog(temp);
-		if(temp != nil){
+//		if(temp != nil){
+//			[_files addObject:temp];
+//		}
+		if(temp == nil){
+			ret = unzGoToNextFile(zipfile);
+			continue;
+		}
+		NSString *extension = [[temp pathExtension] lowercaseString];
+		if([extensions containsObject:extension]){
+//NSLog(@"add");
 			[_files addObject:temp];
 		}
 		ret = unzGoToNextFile(zipfile);
 	}
+	if(zipfile != 0) unzClose(zipfile);
 	
 	[_files sortUsingSelector: @selector (compare:)];
  	_rowCount = [_files count];
@@ -118,7 +132,7 @@
 - (UITableCell *)table:(UITable *)table cellForRow:(int)row column:(UITableColumn *)col {
 	BOOL isDir = NO;
 
-	UIImageAndTextTableCell *cell = [[UIImageAndTextTableCell alloc] init];
+	UIImageAndTextTableCell *cell = [[[UIImageAndTextTableCell alloc] init] autorelease];
 	[cell setTitle: [[_files objectAtIndex:row] lastPathComponent]];
 	return cell;
 }
