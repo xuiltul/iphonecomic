@@ -72,12 +72,20 @@ void initialize(int hz) {
 	tmpAlertDispId = 0;
 }
 
+///////////////////////////////////////////////////////////
 @implementation ExNavBar
+
+/******************************/
+/* ナビバーのＰＯＰデリを設定 */
+/******************************/
 - (void)setPopDelegate : (id)dele
 {
 	_popDelegate = dele;
 }
 
+/******************************/
+/* ナビバーのＰＯＰデリゲート */
+/******************************/
 - (void)popNavigationItem
 {
 	if([_popDelegate respondsToSelector:@selector(exNavBar:popNavigationItem:)]){
@@ -87,14 +95,21 @@ void initialize(int hz) {
 }
 @end
 
-
+///////////////////////////////////////////////////////////
 @implementation Application
+
+/******************************/
+/* 回転イベント               */
+/******************************/
 - (void)deviceOrientationChanged:(GSEvent *)event {
 	int orient = [UIHardware deviceOrientation:YES];
 	if(prefData.Rotation != 0) orient = prefData.Rotation;
 	[_imageview setOrientation: orient];
 }
 
+/******************************/
+/*                            */
+/******************************/
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
 	LoadPref();
