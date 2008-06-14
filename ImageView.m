@@ -134,6 +134,7 @@ bool flag2 = false;
 
 	//情報リストを作らないと。
 	int ret = 0;
+	NSArray *extensions = [NSArray arrayWithObjects:@"jpe",@"jpg",@"jpeg",@"tif",@"tiff",@"png",@"gif",@"bmp",@"img",nil];
 	unz_global_info ugi;
 	unzGetGlobalInfo(zipfile, &ugi);
 
@@ -147,11 +148,19 @@ bool flag2 = false;
 		unzGetCurrentFileInfo (zipfile, &ufi, buf, MAXPATHLEN, 0, 0, 0, 0);
 		if(ufi.uncompressed_size == 0){
 			ret = unzGoToNextFile(zipfile);
-			 continue;
+			continue;
 		}
 		NSString *temp = [NSString stringWithCString: buf encoding:NSShiftJISStringEncoding];
-//	NSLog(temp);
-		if(temp != nil){
+//NSLog(temp);
+//		if(temp != nil){
+//			[filenamelist addObject:temp];
+		if(temp == nil){
+			ret = unzGoToNextFile(zipfile);
+			continue;
+		}
+		NSString *extension = [[temp pathExtension] lowercaseString];
+		if([extensions containsObject:extension]){
+//NSLog(@"add");
 			[filenamelist addObject:temp];
 		}
 		ret = unzGoToNextFile(zipfile);
@@ -285,24 +294,23 @@ bool flag2 = false;
 		resize.width = (int)resize.width;	
 		resize.height = (int)resize.height;	
 
-		unsigned char *bitmap = malloc(resize.width * resize.height * sizeof(unsigned char) * 4);
+		unsigned char *bitmap = malloc(resize.width * resize.height * sizeof(unsigned char) * 2);
 		CGContextRef bitmapContext;
-		bitmapContext = CGBitmapContextCreate(bitmap,	resize.width, resize.height, 8, resize.width * 4,
+		bitmapContext = CGBitmapContextCreate(bitmap,	resize.width, resize.height, 5, resize.width * 2,
 							CGColorSpaceCreateDeviceRGB(),
-							kCGImageAlphaPremultipliedFirst);
+							kCGImageAlphaNoneSkipFirst);
 		CGContextDrawImage (bitmapContext, CGRectMake(0,0,resize.width,resize.height), [nimage imageRef]);
 		CGImageRef *cgImage = CGBitmapContextCreateImage(bitmapContext);
-	
 		[nimage release];
 		nimage = [[UIImage alloc] initWithImageRef: cgImage];
-	
+
 		free(bitmap);
 		CGContextRelease(bitmapContext);
 		Flag = 1;
 	}
+	free(buf);
 
 	[_currentscroll setImageFromImage: nimage withFlag:Flag];
-	free(buf);
 
 	return 0;
 }

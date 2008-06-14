@@ -169,11 +169,12 @@
 	BOOL isDir = NO;
 	char buf0[MAXPATHLEN];
 	
-	UIImageAndTextTableCell *cell = [[UIImageAndTextTableCell alloc] init];
+	UIImageAndTextTableCell *cell = [[[UIImageAndTextTableCell alloc] init] autorelease];
 //	[cell setTitle: [[_files objectAtIndex: row] stringByDeletingPathExtension]];
 	[cell setTitle: [[_fileview objectAtIndex: row] stringByDeletingPathExtension]];
 	NSString* path0 = [_path copy];
 	if([_path characterAtIndex: [_path length] - 1] != '/'){
+		[path0 release];
 		path0 = [_path stringByAppendingString: @"/"];
 	}
 	NSString *file = [path0 stringByAppendingString:[_files objectAtIndex:row]];
@@ -184,45 +185,45 @@
 		[cell setImage: _folder];
 		[[cell iconImageView] setFrame:CGRectMake(-10,0,32,32)];
 	}
-	else if(0){
-		//zipから表紙？をとってくる
-		[file getCString: buf0 maxLength:MAXPATHLEN encoding:NSUTF8StringEncoding];
-		unzFile zipfile = unzOpen(buf0);	
-		if(zipfile == 0) return cell;
-		unzGoToFirstFile(zipfile);
-		
-		unz_file_info ufi;
-		unzGetCurrentFileInfo(zipfile, &ufi, 0, 0, 0, 0, 0, 0);
-		//2MB以上はあきらめる
-		if(ufi.uncompressed_size > 1024 * 1024 * 2) return;
-
-		char *buf = (char*)malloc(ufi.uncompressed_size + 128);
-		unzOpenCurrentFile(zipfile);
-		int read = unzReadCurrentFile(zipfile, buf, ufi.uncompressed_size);
-		unzCloseCurrentFile(zipfile);
-		unzClose(zipfile);
-		UIImage *image = [[UIImage alloc] initWithData: [NSData dataWithBytes:buf length:read] cache: true];
-		free(buf);
-		struct CGImage *coverRef = [image imageRef];
-		int height = CGImageGetHeight(coverRef);
-		int width = CGImageGetWidth(coverRef);
-		if (height >= width)
-		{
-			float frac = (float)width / height;
-			width = (int)(46*frac);
-			height = 46;
-		}
-		else
-		{
-			float frac = (float)height / width;
-			height = (int)(46*frac);
-			width = 46;
-		}
-		 [cell setImage:image];
-		 [[cell iconImageView] setFrame:CGRectMake(-10,0,width,height)];
-
-		//[cell setImage: ];
-	}
+//	else if(0){
+//		//zipから表紙？をとってくる
+//		[file getCString: buf0 maxLength:MAXPATHLEN encoding:NSUTF8StringEncoding];
+//		unzFile zipfile = unzOpen(buf0);	
+//		if(zipfile == 0) return cell;
+//		unzGoToFirstFile(zipfile);
+//		
+//		unz_file_info ufi;
+//		unzGetCurrentFileInfo(zipfile, &ufi, 0, 0, 0, 0, 0, 0);
+//		//2MB以上はあきらめる
+//		if(ufi.uncompressed_size > 1024 * 1024 * 2) return;
+//
+//		char *buf = (char*)malloc(ufi.uncompressed_size + 128);
+//		unzOpenCurrentFile(zipfile);
+//		int read = unzReadCurrentFile(zipfile, buf, ufi.uncompressed_size);
+//		unzCloseCurrentFile(zipfile);
+//		unzClose(zipfile);
+//		UIImage *image = [[UIImage alloc] initWithData: [NSData dataWithBytes:buf length:read] cache: true];
+//		free(buf);
+//		struct CGImage *coverRef = [image imageRef];
+//		int height = CGImageGetHeight(coverRef);
+//		int width = CGImageGetWidth(coverRef);
+//		if (height >= width)
+//		{
+//			float frac = (float)width / height;
+//			width = (int)(46*frac);
+//			height = 46;
+//		}
+//		else
+//		{
+//			float frac = (float)height / width;
+//			height = (int)(46*frac);
+//			width = 46;
+//		}
+//		 [cell setImage:image];
+//		 [[cell iconImageView] setFrame:CGRectMake(-10,0,width,height)];
+//
+//		//[cell setImage: ];
+//	}
 	//ZIPファイルの場合
 	else{
 		[file getCString:buf0 maxLength:MAXPATHLEN encoding:NSUTF8StringEncoding];
@@ -245,7 +246,6 @@
 /*                            */
 /******************************/
 - (void)tableRowSelected:(NSNotification *)notification {
-//	NSLog([self selectedFile]);
 	if( [_delegate respondsToSelector:@selector( fileBrowser:fileSelected: )] )
 		[_delegate fileBrowser:self fileSelected:[self selectedFile]];
 }
