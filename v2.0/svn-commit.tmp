@@ -1,0 +1,16 @@
+とりあえずの完成？
+-- この行以下は無視されます --
+
+AM   bookss.png
+M    Global.h
+M    Application.h
+M    Global.m
+M    Application.m
+M    PrefsView.h
+M    PrefsView.m
+M    FileList.m
+M    ScrollImage.m
+M    ImageView.h
+AM   booksf.png
+M    ImageView.m
+M    Japanese.lproj/Localizable.strings
