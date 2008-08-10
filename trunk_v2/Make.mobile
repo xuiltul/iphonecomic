@@ -1,0 +1,42 @@
+CC=arm-apple-darwin-gcc
+LD=$(CC)
+CFLAGS=-DMOBILE
+#CFLAGS=-O
+#CFLAGS=-I. -I./zlib -I/usr/include
+LDFLAGS=-lobjc \
+	-framework CoreFoundation \
+	-framework Foundation \
+	-framework UIKit \
+	-framework LayerKit \
+	-framework CoreGraphics \
+	-framework GraphicsServices \
+	-framework CoreSurface \
+	-framework CoreAudio \
+	-framework IOKit \
+	-framework AudioToolbox \
+	-larmfp
+
+APPNAME=iComic
+FILES=mainapp.o Application.o FileBrowser.o \
+ImageView.o ScrollImage.o Global.o PrefsView.o \
+FileList.o \
+zlib/ioapi.o zlib/unzip.o zlib/libz.a
+
+all:    $(APPNAME) package
+
+$(APPNAME):  $(FILES)
+
+	$(LD) $(LDFLAGS) -v -o $@ $^
+
+%.o:    %.m
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
+
+clean:
+	rm -fr *.o $(APPNAME).app/$(APPNAME)
+
+package: $(APPNAME)
+	rm -fr $(APPNAME).app/$(APPNAME)
+	mv $(APPNAME) $(APPNAME).app/$(APPNAME)
+
+debug: $(APPNAME) package
+
