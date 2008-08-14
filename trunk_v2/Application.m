@@ -473,7 +473,7 @@ void initialize(int hz) {
 /******************************/
 - (void)fileBrowser:(FileBrowser *)browser fileSelected:(NSString *)file
 {
-debug_log("fileBrowser\n");
+//debug_log("fileBrowser\n");
 //NSLog(file);
 //	[file getCString:tmpFile maxLength:MAXPATHLEN encoding:NSUTF8StringEncoding];
 //	[self viewSelector:IMG_VIEW:1];
@@ -481,7 +481,7 @@ debug_log("fileBrowser\n");
 
 	[file getCString:tmpFile maxLength:MAXPATHLEN encoding:NSUTF8StringEncoding];
 
-debug_log(tmpFile);
+//debug_log(tmpFile);
 
 	//パスがフォルダの場合、フォルダ表示
 	BOOL isDir = NO;
