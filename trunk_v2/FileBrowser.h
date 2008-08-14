@@ -21,7 +21,6 @@
 
 @interface FileBrowser : UIView 
 {
-	NSMutableArray *_extensions;
 	NSMutableArray *_files;
 	NSMutableArray *_fileview;
 	UITable *_table;
@@ -30,6 +29,7 @@
 	id _delegate;
 	UIImage *_folder;
 	UIImage *_books, *_booksf, *_bookss;
+	NSString *_nowfile;
 }
 
 - (id)initWithFrame:(CGRect)rect;
@@ -41,6 +41,7 @@
 - (UITableCell *)table:(UITable *)table cellForRow:(int)row column:(UITableColumn *)col;
 - (void)tableRowSelected:(NSNotification *)notification;
 - (NSString *)selectedFile;
-- (void)setExtensions:(NSArray *)extensions;
+- (void)setSelectFile:(NSString *)file;
+- (void)table_scroll;
 
 @end

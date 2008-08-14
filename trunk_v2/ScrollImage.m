@@ -3,16 +3,14 @@
 #import "Global.h"
 
 #define MIN_SCALE (1.0f)
-#define MAX_SCALE (4.0f)
-#define ZOOM_RATE (0.005f)
-
-#define NEXT_PAGE 1
-#define PREV_PAGE 2
-#define EXIT_PAGE 3
+#define BTN_IGNORE 20
 
 struct CGRect screct;		//フルスクリーンの始点とサイズを保持
-bool _bGoNext;				//ズームモード
 
+float mUpyPoint;
+bool isZoom;
+
+static bool _evntEnable;
 
 @implementation ScrollImage
 - (id)initWithFrame:(struct CGRect)frame
@@ -20,30 +18,28 @@ bool _bGoNext;				//ズームモード
 	//フルスクリーンの始点とサイズを取得する
 	screct = [UIHardware fullScreenApplicationContentRect];
 	screct.origin = CGPointZero;
+	screct.size.height += STSBAR;
 
 	[super initWithFrame: frame];
-	_imagezoom = MIN_SCALE;			//ズーム倍率
 	_currentimage = nil;			//イメージなし
 	_mdelegate = nil;
 	_imageview = [[UIImageView alloc] initWithFrame:frame];
 	[self addSubview: _imageview];
 	//中心点を画面の中心に設定
 	_centerpoint = CGPointMake(screct.size.width / 2, screct.size.height / 2);
-	_isVertical = true;				//縦位置で初期化
-	_matrixprev =	CGAffineTransformRotate(CGAffineTransformMakeScale(1, 1), 0 * M_PI / 180.0f);
 	_isvert = true;					//縦
 	_orient = 1;					//正面 0°
-	_bGoNext = false;
+	_isDragged = false;
+	mUpyPoint = 0.0f;
+	isZoom= false;
+	_tapCount = 0;
+	_evntEnable = false;
 
 	[super setTapDelegate: self];
 	[super setGestureDelegate: self];
-//	NSBundle *bundle = [NSBundle mainBundle];
-//	_ileft = [UIImage imageAtPath: [bundle pathForResource:@"left" ofType:@"png"]];
-//	_iright = [UIImage imageAtPath: [bundle pathForResource:@"right" ofType:@"png"]];
-//	_ihome = [UIImage imageAtPath: [bundle pathForResource:@"home" ofType:@"png"]];
+
 	return self;
 }
-
 
 /******************************/
 /*                            */
@@ -56,76 +52,40 @@ bool _bGoNext;				//ズームモード
 /******************************/
 /* イメージを回転させる       */
 /******************************/
--(void) setOrientation: (int) orientation animate:(bool)anime
+-(void) setOrientation:(int)orientation
 {
 	float degree = 0;
-	float tscale = 1.0f;
-	float movex = 0.0f;
-	float movey = 0.0f;
-	bool misvert = _isvert;		//現在の角度を保存する
 
-	//回転角度が変わらない場合や、値が不正(1～4以外)は何もせず終了
-	if( (_orient == orientation) || (orientation == 0) || (orientation >= 5) ) return;
-	//次の角度を設定する
-	switch(orientation){
-	case 1:		//正面 0°
+	if(1==orientation){			//正面 0°
+		if(2==_orient)		degree = 180.0f;
+		else if(3==_orient)	degree = 270.0f;
+		else if(4==_orient)	degree = 90.0f;
 		_isvert = true;
-		degree = 0 * M_PI / 180.0f;
-		movex = 0.0;
-		movey = 0.0;
-		break;
-	case 2:		//180°
-		_isvert = true;
-		degree = 180 * M_PI / 180.0f;
-		movex = 0.0;
-		movey = 0.0;
-		break;
-	case 3:		//左 90°
-		_isvert = false;
-		degree = 90 * M_PI / 180.0f;
-		movex = 0.0;
-		movey = screct.size.width / 2;
-		break;
-	case 4:		//右 270°
-		_isvert = false;
-		degree = -90 * M_PI / 180.0f;
-		movex = 0.0;
-		movey = screct.size.width / 2;
-		break;
-	default:
-		return;
 	}
+	else if(2==orientation){	//180°
+		if(1==_orient)		degree = 180.0f;
+		else if(3==_orient)	degree = 90.0f;
+		else if(4==_orient)	degree = 270.0f;
+		_isvert = true;
+	}
+	else if(3==orientation){	//左 90°
+		if(1==_orient)		degree = 90.0f;
+		else if(2==_orient)	degree = 270.0f;
+		else if(4==_orient)	degree = 180.0f;
+		_isvert = false;
+	}
+	else if(4==orientation){	//右 270°
+		if(1==_orient)		degree = 270.0f;
+		else if(2==_orient)	degree = 90.0f;
+		else if(3==_orient)	degree = 180.0f;
+		_isvert = false;
+	}
+	//回転実行
+	[_imageview setRotationBy:degree];
 	//新しい角度を保持
 	_orient = orientation;
-	//前と縦横が違うなら、切り替える
-	if( (misvert != _isvert) && (_isvert == false) ){
-		tscale = 1.4375f;
-	}
-	//アニメーションの設定（アフィン変化マトリックス??）
-	CGAffineTransform matrix = CGAffineTransformTranslate(
-			CGAffineTransformRotate(CGAffineTransformMakeScale(tscale, tscale), degree), movex, movey );
-	UITransformAnimation *scaleAnim = [[UITransformAnimation alloc] initWithTarget: _imageview];
-	[scaleAnim setStartTransform: _matrixprev];
-	[scaleAnim setEndTransform: matrix];
-	UIAnimator *anim = [[UIAnimator alloc] init];
-	//アニメーション
-	if(anime)	//する
-		[anim addAnimation:scaleAnim withDuration:0.50f start:YES];
-	else		//しない
-		[anim addAnimation:scaleAnim withDuration:0.01f start:YES];
-	//現在のアニメーション情報を保存する
-	_matrixprev = matrix;
-	//[self fitRect];
-	[NSTimer scheduledTimerWithTimeInterval: 0.51f target: self selector:@selector(add:) userInfo:self repeats:NO];
-}
 
--(void) add: (NSTimer*) timer
-{
-	ScrollImage * view = [timer userInfo];
-	//[view fitRect];
-	[self fitRect];
-	[self resizeImage];			//リサイズする
-	[self scrollToTopRight];	//右上に移動
+	return;
 }
 
 /******************************/
@@ -133,39 +93,44 @@ bool _bGoNext;				//ズームモード
 /******************************/
 - (void) fitRect
 {
+	[self fitRect:(prefData.ToKeepScale==YES)];
+}
+
+- (void) fitRect:(bool)flag
+{
 	if( (_imagesize.width == 0) || (_imagesize.height == 0) ) return;
 
-	if( prefData.ToFitScreen == YES){
+//	if( !flag ){
 		_imagesize = [self calcFitImage:_imagesize];
-	}
-	else{
-		float zoomRate, tmpZoomH, tmpZoomW;
-		if( _isvert == true ){
-			tmpZoomH = screct.size.height / _imagesize.height;
-			tmpZoomW = screct.size.width / _imagesize.width;
-		}
-		else{
-			if( _imagesize.height > _imagesize.width ){
-				tmpZoomW = tmpZoomH = screct.size.height / _imagesize.width;
-			}
-			else{
-				tmpZoomH = screct.size.height / _imagesize.width;
-				tmpZoomW = screct.size.width / _imagesize.height;
-			}
-		}
-		if(tmpZoomH > tmpZoomW)
-			zoomRate = tmpZoomW;
-		else
-			zoomRate = tmpZoomH;
-		_imagesize.height *= zoomRate;
-		_imagesize.width *= zoomRate;
-	}
+//	}
+//	else{
+//		float zoomRate, tmpZoomH, tmpZoomW;
+//		if( _isvert == true ){
+//			tmpZoomH = screct.size.height / _imagesize.height;
+//			tmpZoomW = screct.size.width / _imagesize.width;
+//		}
+//		else{
+//			if( _imagesize.height > _imagesize.width ){
+//				tmpZoomW = tmpZoomH = screct.size.height / _imagesize.width;
+//			}
+//			else{
+//				tmpZoomH = screct.size.height / _imagesize.width;
+//				tmpZoomW = screct.size.width / _imagesize.height;
+//			}
+//		}
+//		if(tmpZoomH > tmpZoomW)
+//			zoomRate = tmpZoomW;
+//		else
+//			zoomRate = tmpZoomH;
+//		_imagesize.height *= zoomRate;
+//		_imagesize.width *= zoomRate;
+//	}
 	//基準の画像サイズを保存
 	_oimagesize = _imagesize;
 	//拡大率を指定する場合
-	if( (prefData.ToKeepScale == YES) && (_imagezoom > 0) ){
-		_imagesize.width *= _imagezoom;
-		_imagesize.height *= _imagezoom;
+	if( flag && (statData.ZoomRate > 0) ){
+		_imagesize.width *= statData.ZoomRate;
+		_imagesize.height *= statData.ZoomRate;
 	}
 }
 
@@ -176,6 +141,8 @@ bool _bGoNext;				//ズームモード
 {
 	[_imageview release];
 	[_currentimage release];
+
+	[super dealloc];
 }
 
 /******************************/
@@ -194,14 +161,6 @@ bool _bGoNext;				//ズームモード
 }
 
 /******************************/
-/*                            */
-/******************************/
-- (void) setPercent : (float)percent
-{
-	_imagezoom = percent;
-}
-
-/******************************/
 /* イメージを設定する         */
 /******************************/
 - (int) setImage : (NSData*) data
@@ -210,11 +169,11 @@ bool _bGoNext;				//ズームモード
 	//イメージのサイズを取得する
 	CGSize frame = [image size];
 	int ret = 0;
-	if(frame.width > 1390 || frame.height > 1390){
+	if( (frame.width > psysData.ImgSkipLen) || (frame.height > psysData.ImgSkipLen) ){
 		ret = 1;
 	}
 	//
-	[self setImageFromImage: image];
+	[self setImageFromImage:image withFlag:ret];
 
 	return ret;
 }
@@ -231,7 +190,6 @@ bool _bGoNext;				//ズームモード
 	//イメージを保存
 	_currentimage = image;					//イメージのオブジェクトを保存
 	_imagesize = [_currentimage size];		//イメージのサイズを保存
-	[image setOrientation: 0];				//イメージの回転方向を0
 	[_imageview setImage: _currentimage];	//イメージを表示イメージに設定
 	[self setContentSize: _imagesize];		
 
@@ -263,16 +221,7 @@ bool _bGoNext;				//ズームモード
 		moveOffset = CGPointMake(0, 0);
 		break;
 	}
-// NSLog(@"moveOffset x=%f,y=%f", moveOffset.x, moveOffset.y);
 	[super setOffset:moveOffset];
-}
-
-/******************************/
-/* ズーム倍率を返す           */
-/******************************/
-- (float) getPercent
-{
-	return _imagezoom;
 }
 
 /******************************/
@@ -280,8 +229,9 @@ bool _bGoNext;				//ズームモード
 /******************************/
 - (void)mouseDown:(GSEventRef)theEvent
 {
+	CGPoint		_cgpDownNow;
 	// DOWNイベントの座標を取得する
-	_cgpDown = GSEventGetLocationInWindow(theEvent);
+	_cgpDownNow = GSEventGetLocationInWindow(theEvent);
 
 	// 2本指でタッチ（ 0 = one finger down、1 = two fingers down ）
 	if( GSEventIsChordingHandEvent(theEvent) ){
@@ -292,7 +242,16 @@ bool _bGoNext;				//ズームモード
 		// 2本指の中心点を中心点に設定する
 		_centerpoint = CGPointMake((pt1.x+pt2.x) / 2, (pt1.y+pt2.y) / 2);
 	}
+//NSLog(@"_cgpDown %f, %f", _cgpDownNow.x, _cgpDownNow.y);
 
+	//タップ回数
+	if( ( fabs(_cgpDown.x - _cgpDownNow.x) < BTN_IGNORE ) && ( fabs(_cgpDown.y - _cgpDownNow.y) < BTN_IGNORE ) ){
+		_tapCount++;
+	}
+	else{
+		_tapCount = 0;
+	}
+	_cgpDown = _cgpDownNow;
 	[super mouseDown:theEvent];
 }
 
@@ -301,15 +260,22 @@ bool _bGoNext;				//ズームモード
 /********************************/
 - (void)mouseUp:(GSEventRef)theEvent
 {
-	int next=0, lt=0, lb=0, rt=0, rb=0, hit=0;
+	//スクロールが有効な場合
+	if( _isDragged == true ){
+		_isDragged = false;
+//NSLog(@"mouseUp scroll");
 
-	//スクロールが有効な場合は、画面移動は無効
-	if( _bGoNext == true ){
-		_bGoNext = false;
+		if( isZoom && prefData.ReloadScreen )
+			[self goNextPage:RELD_PAGE];
+		isZoom= false;
+		statData.offset = [self offset];
 		[super mouseUp:theEvent];
 		return;
 	}
-	_bGoNext = false;
+	_isDragged = false;
+	isZoom= false;
+
+	int next=0, lt=0, lb=0, rt=0, rb=0, hit=0;
 
 	// 角判定の大きさを取得
 	hit = prefData.HitRange;
@@ -317,7 +283,10 @@ bool _bGoNext;				//ズームモード
 	_cgpUp = GSEventGetLocationInWindow(theEvent);
 	
 	// タッチした場所を判定する。lt=左上、lb=左下、rt=右上 rb=右下
-	if( (fabs(_cgpDown.x - _cgpUp.x) < (hit/5)) && (fabs(_cgpDown.y - _cgpUp.y) < (hit/5)) ){
+	if( (fabs(_cgpDown.x - _cgpUp.x) < BTN_IGNORE ) && (fabs(_cgpDown.y - _cgpUp.y) < BTN_IGNORE ) ){
+
+//NSLog(@"mouseUp tap _cgpUp(%f,%f)", _cgpUp.x, _cgpUp.y);
+
 		lt = (_cgpUp.x < hit) && (_cgpUp.y < hit);
 		lb = (_cgpUp.x < hit) && (_cgpUp.y > (screct.size.height - hit));
 		rt = (_cgpUp.x > (screct.size.width - hit)) && (_cgpUp.y < hit);
@@ -351,7 +320,22 @@ bool _bGoNext;				//ズームモード
 	//ボタンページめくりは無効
 	if( (next!=EXIT_PAGE)&&(prefData.ButtonSlide!=YES) ) next = 0;
 
-	[self goNextPage:next];
+	if(next)
+		[self goNextPage:next];
+	else{
+//NSLog(@"_tapCount %d", _tapCount);
+		if( _tapCount == 1 ){
+//NSLog(@"Zooming %f", ( (_imagezoom == 1.0f) ? 2.0f : 1.0f ) );
+			float zoomtmp = 1.0f;
+			CGPoint pt = [self offset];
+			pt.x /= statData.ZoomRate;
+			pt.y /= statData.ZoomRate;
+			[self setResize:zoomtmp];
+			[self setOffsetFit:pt];
+//			[self goNextPage:RELD_PAGE];
+		}
+	}
+	_fDistancePrev = 0;
 	[super mouseUp:theEvent];
 }
 
@@ -360,9 +344,8 @@ bool _bGoNext;				//ズームモード
 /******************************/
 - (void) setRotate : (bool) isvertical
 {
-	_isVertical = isvertical;
 	[self fitRect];
-	[self resizeImage];			//リサイズする
+//	[self resizeImage];			//リサイズする
 	[self scrollToTopRight];	//右上に移動
 	CGRect rc = [self frame];
 }
@@ -372,7 +355,8 @@ bool _bGoNext;				//ズームモード
 /******************************/
 - (void)alertSheet:(UIAlertSheet *)sheet buttonClicked:(int)button
 {
-	[sheet dismissAnimated:YES];
+NSLog(@"scroll alertSheet");
+//	[sheet dismissAnimated:YES];
 }
 
 /******************************/
@@ -381,12 +365,12 @@ bool _bGoNext;				//ズームモード
 - (void)mouseDragged:(GSEventRef)theEvent
 {
 //NSLog(@"mouseDragged");
-	_bGoNext = true;
+	_isDragged = true;
+	_tapCount = 0;
 
 	// 2本指でタッチ（ 0 = one finger down、1 = two fingers down ）
 	if ( GSEventIsChordingHandEvent(theEvent) ){
 //NSLog(@"mouseDragged 2 touch");
-
 		// タッチしている2つの座標を取得する。pt1、pt2
 		CGPoint pt1 = GSEventGetInnerMostPathPosition(theEvent);
 		CGPoint pt2 = GSEventGetOuterMostPathPosition(theEvent);
@@ -394,42 +378,17 @@ bool _bGoNext;				//ズームモード
 		//2本指の距離を計算し、前回の距離との増分を出す。
 		float fDistance = sqrt( (pt2.x-pt1.x) * (pt2.x-pt1.x) + (pt2.y-pt1.y) * (pt2.y-pt1.y) );
 		float fHowFar = fDistance - _fDistancePrev;
-		float imagezoomPrev = _imagezoom;
+
+		if(_fDistancePrev <= 0){
+			_fDistancePrev = fDistance;
+			return;
+		}
 
 		//現在の2本指の距離を保存する
 		_fDistancePrev = fDistance;
-		//ズーム倍率を今回の増分だけ増減する
-//		_imagezoom += ZOOM_RATE * fHowFar;
-		_imagezoom += (ZOOM_RATE * fHowFar * _imagezoom);
+		//ズーム処理実行
+		[self setResize:(statData.ZoomRate + (psysData.ZoomScale * fHowFar * statData.ZoomRate))];
 
-		//倍率が範囲を超える場合は、最大・最小値に設定
-		if( _imagezoom < MIN_SCALE ){
-			_imagezoom = MIN_SCALE;
-		}
-		else if( MAX_SCALE < _imagezoom ){
-			 _imagezoom = MAX_SCALE;
-		}
-		//倍率が変わった場合リサイズ
-		if( imagezoomPrev != _imagezoom ){
-			CGSize org = _imagesize;
-			CGPoint pt = [self offset];
-			
-			//リサイズ
-			_imagesize.width = _oimagesize.width * _imagezoom;
-			_imagesize.height = _oimagesize.height * _imagezoom;
-			[self resizeImage];
-			
-			//オフセット
-			if( _isvert == true ){
-				pt.x += (_imagesize.width - org.width) * ((pt.x + _centerpoint.x) / _imagesize.width);
-				pt.y += (_imagesize.height - org.height) * ((pt.y + _centerpoint.y) / _imagesize.height);
-			}
-			else{
-				pt.x += (_imagesize.height - org.height) * ((pt.x + _centerpoint.x) / _imagesize.height);
-				pt.y += (_imagesize.width - org.width) * ((pt.y + _centerpoint.y) / _imagesize.width);
-			}
-			[self setOffsetFit:pt];
-		}
 		// ズームする場合はここで終了
 		return;
 	}
@@ -450,7 +409,8 @@ bool _bGoNext;				//ズームモード
 /******************************/
 - (BOOL)canHandleSwipes
 {
-	return (prefData.SwipeSlide && !_bGoNext);
+//	return (prefData.SwipeSlide && !_isDragged && !isZoom);
+	return (prefData.SwipeSlide && !_isDragged);
 }
 
 /******************************/
@@ -479,6 +439,8 @@ bool _bGoNext;				//ズームモード
 	default:
 		break;
 	}
+	_isDragged = false;
+	isZoom= false;
 	[self goNextPage:next];
 	[super swipe:orientation withEvent:event];
 }
@@ -499,6 +461,10 @@ bool _bGoNext;				//ズームモード
 	case PREV_PAGE:
 		if([_mdelegate respondsToSelector:@selector(scrollImage:filePrev:)])
 			[_mdelegate scrollImage:self filePrev:self];
+		break;
+	case RELD_PAGE:
+		if([_mdelegate respondsToSelector:@selector(scrollImage:fileNow:)])
+			[_mdelegate scrollImage:self fileNow:self];
 		break;
 	case EXIT_PAGE:
 		if([_mdelegate respondsToSelector:@selector(scrollImage:fileEnd:)])
@@ -590,7 +556,6 @@ bool _bGoNext;				//ズームモード
 	else if( (image_w - pt.x) < screct.size.width ){
 		ret.x = image_w - screct.size.width;
 	}
-
 	if( image_h  < screct.size.height ){
 		switch(_orient){
 		case 1:		//正面 0°
@@ -610,7 +575,65 @@ bool _bGoNext;				//ズームモード
 	else if( (image_h - pt.y) < screct.size.height ){
 		ret.y = image_h - screct.size.height;
 	}
+
 	[super setOffset:ret];
+}
+
+/******************************/
+/* ズーム処理を実行する       */
+/******************************/
+- (void) setResize:(float)zoomSet
+{
+	float zoom = zoomSet;
+
+	//倍率が範囲を超える場合は、最大・最小値に設定
+	if( zoom < MIN_SCALE ){
+		zoom = MIN_SCALE;
+	}
+	else if( prefData.MaxScale < zoom ){
+		 zoom = prefData.MaxScale;
+	}
+	//倍率が変わった場合リサイズ
+	if( zoom != statData.ZoomRate ){
+		CGSize org = _imagesize;
+		CGPoint pt = [self offset];
+		
+		//リサイズ
+		_imagesize.width = _oimagesize.width * zoom;
+		_imagesize.height = _oimagesize.height * zoom;
+		[self resizeImage];
+		
+		//オフセット
+		if( _isvert == true ){
+			pt.x += (_imagesize.width - org.width) * ((pt.x + _centerpoint.x) / _imagesize.width);
+			pt.y += (_imagesize.height - org.height) * ((pt.y + _centerpoint.y) / _imagesize.height);
+		}
+		else{
+			pt.x += (_imagesize.height - org.height) * ((pt.x + _centerpoint.x) / _imagesize.height);
+			pt.y += (_imagesize.width - org.width) * ((pt.y + _centerpoint.y) / _imagesize.width);
+		}
+		[self setOffsetFit:pt];
+		isZoom= true;
+	}
+	statData.ZoomRate = zoom;
+}
+
+/******************************/
+/*                            */
+/******************************/
+-(void) setOrientZoom
+{
+	if(prefData.ToKeepScale!=YES){
+		statData.ZoomRate = MIN_SCALE;
+		return;
+	}
+	if( _isvert == true ){
+		statData.ZoomRate = statData.ZoomRate * 480 / 320;
+	}
+	else{
+		statData.ZoomRate = statData.ZoomRate * 320 / 480;
+	}
+	if( statData.ZoomRate < MIN_SCALE )	statData.ZoomRate = MIN_SCALE;
 }
 
 @end

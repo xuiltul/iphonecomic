@@ -9,7 +9,7 @@ int main(int argc, char **argv)
 
     //UIApplicationMainを呼び出す。
     //初めのはargc, argv. 3つ目は BooksAppのclassを送っているのか。 classってなんだ。
-    return UIApplicationMain(argc, argv, [Application class]);
+    return UIApplicationMain(argc, argv, @"Application", @"Application");
 }
 
 

@@ -14,13 +14,15 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import <UIKit/UIApplication.h>
-#import <UIKit/UIPushButton.h>
 #import <UIKit/UITableCell.h>
 #import <UIKit/UIImageAndTextTableCell.h>
+#import "Global.h"
 #import "FileBrowser.h"
 #import "ImageView.h"
 #import "PrefsView.h"
-#import "FileList.h"
+#import "ZipFileBrowser.h"
+#import "PageBrowser.h"
+#import "ButtonBar.h"
 
 /* #define VIEWCOUNT 4 */
 
@@ -33,6 +35,7 @@
 
 @interface Application : UIApplication 
 {
+	UIWindow			*window;
 	UIView*				_mainview;
 	ExNavBar*			_navbar;
 	FileBrowser*		_browser;
@@ -43,8 +46,13 @@
 	UITransitionView*	_tabletransition;
 	PrefsView*			_prefsview;
 	ImageView*			_imageview;
+	PageBrowser*		_pagebrowser;
+	UIButtonBar*		_buttonBar;
+	UINavigationBar*	_titleBar;
 }
 
 -(void) gravity: (float)x  gy:(float) y gz:(float)z;
+-(void) viewSelector:(int)ShowViewTmp:(int)TStyle;
+
 @end
 

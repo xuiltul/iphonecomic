@@ -1,31 +1,32 @@
 #import"Global.h"
 #define G  34943
 
-#ifdef MOBILE
-	#define DATA_DIR @"/private/var/mobile/Library/iComic/"
-	#define COMIC_PREF_PATH "/private/var/mobile/Library/iComic/Pref.dat"
-	#define COMIC_PAGE_PATH "/private/var/mobile/Library/iComic/Page.dat"
-#else
-	#define DATA_DIR @"/private/var/root/Library/iComic/"
-	#define COMIC_PREF_PATH "/private/var/root/Library/iComic/Pref.dat"
-	#define COMIC_PAGE_PATH "/private/var/root/Library/iComic/Page.dat"
-#endif
+#define DATA_DIR		@"/private/var/mobile/Library/iComic/"
+#define COMIC_PREF_PATH	"/private/var/mobile/Library/iComic/Pref.dat"
+#define COMIC_STAT_PATH	"/private/var/mobile/Library/iComic/Stat.dat"
+#define COMIC_PAGE_PATH	"/private/var/mobile/Library/iComic/Page.dat"
+#define COMIC_PSYS_PATH	"/Applications/iComic.app/Psys.dat"
 
 void MakeLibDir();
 unsigned crc_code(int, char *);
-void InitPrefs();
+void InitPref();
+void InitStat();
 void RefreshPageData();
-void AddPageData(char *);
+void AddPageData(char *,int);
 void InitPageData();
 void FindFileRecursively(NSString*);
 
 //iComicに必要な定義情報
 int PagesCnt;		//ページデータの情報数
-int IsViewingComic = 0;
+
 PrefData prefData;
+StatData statData;
+PsysData psysData;
 PageData pageData[MAXBOOKS];
 char PagesAccCnt[MAXBOOKS];
 char tmpFile[MAXPATHLEN];
+BOOL isShowImage;
+char tmpLastFile[MAXPATHLEN];
 
 //定義情報格納ディレクトリ作成
 void MakeLibDir(void)
@@ -94,8 +95,7 @@ void FindFileRecursively(NSString* _path)
 	}
 
 	NSFileManager *fileManager = [NSFileManager defaultManager];
-	NSArray *tempArray = [[NSArray alloc] 
-	initWithArray:[fileManager directoryContentsAtPath:_path]];
+	NSArray *tempArray = [[NSArray alloc] initWithArray:[fileManager directoryContentsAtPath:_path]];
 	if ([fileManager fileExistsAtPath: _path] == NO) {
 		return;
 	}
@@ -104,15 +104,26 @@ void FindFileRecursively(NSString* _path)
 	NSEnumerator *dirEnum = [tempArray objectEnumerator];
 	while (file = [dirEnum nextObject]){
 		file = [_path stringByAppendingString: file];
+		[file getCString: buf maxLength:MAXPATHLEN encoding:NSUTF8StringEncoding];
+
+		int crc = crc_code(strlen(buf), buf);
+
 		if([fileManager fileExistsAtPath:file isDirectory:&isDir] && isDir){
 			FindFileRecursively(file);
 		}
-		else{
-			[file getCString: buf maxLength:MAXPATHLEN encoding:NSUTF8StringEncoding];
-			AddPageData(buf);
+		else if( [[file pathExtension] compare:@"zip" options:NSCaseInsensitiveSearch] == NSOrderedSame ){
+			AddPageData(buf, crc);
+		}
+//		else{
+//NSLog(@"skip buf=%s", buf);
+//		}
+		if( crc == statData.ReadFile ){
+			strcpy(tmpFile, buf);
 		}
  	}
 	[tempArray release];
+//
+//NSLog(@"tmpFile=%s", tmpFile);
 }
 
 //存在しないZIPファイルのページデータを削除する
@@ -134,10 +145,12 @@ void RefreshPageData()
 }
 
 //ページデータを追加
-void AddPageData(char *fname)
+//void AddPageData(char *fname)
+void AddPageData(char *fname, int crc)
 {
 	int i = 0;
-	int crc = crc_code(strlen(fname), fname);
+
+//NSLog(@"AddPageData crc=%d, ReadFile=%d", crc, statData.ReadFile);
 
 	if(crc == 0) return;
 	for(i = 0; i < MAXBOOKS; i++){
@@ -154,6 +167,7 @@ void AddPageData(char *fname)
 	pageData[PagesCnt].page = -2;
 	PagesAccCnt[PagesCnt] = 1;
 	PagesCnt++;
+
 	return;
 }
 
@@ -161,7 +175,7 @@ void AddPageData(char *fname)
 void SetPageData(char* fname, int page)
 {
 	int i = 0;
-	int crc = crc_code(strlen(fname), fname);
+	int crc = crc_code(strlen(tmpFile), tmpFile);
 
 	for(i = 0; i < PagesCnt; i++){
 		if(pageData[i].crc == crc){
@@ -177,15 +191,15 @@ void SetPageData(char* fname, int page)
 }
 
 //定義の初期設定
-void InitPrefs()
+void InitPref()
 {
-	prefData.Ver=2;
-	prefData.IsScroll			= YES;	// バウンズ
+	prefData.Ver=5;
+	prefData.IsNextZip			= YES;	// 次のZIPを表示
 	prefData.ScrollSpeed		= 85;	// スクロールの速さ
 	prefData.ToScrollRightTop	= YES;	// 次ページで右上に行く
 	prefData.ToKeepScale		= YES;	// 拡大率を維持
 	prefData.LBtnIsNext			= NO;	// 左ボタンで次のページ
-	prefData.HitRange			= 60;	// 角判定の大きさ
+	prefData.HitRange			= 60;	// ボタンの大きさ
 	prefData.HideStatusbar		= YES;	// ステータスバー
 	prefData.ToFitScreen		= YES;	// リサイズ
 	prefData.Rotation			= 0;	// 回転(1-正面, 2-180°, 3-左, 4-右)
@@ -194,6 +208,9 @@ void InitPrefs()
 	prefData.SwipeSlide			= YES;	// スワイプページめくり
 	prefData.SoundOn			= NO;	// サウンド
 	prefData.SlideRight			= YES;	// 右にスライド
+	prefData.MaxScale			= 4;	// 最大倍率
+	prefData.ButtonIgnore		= 10;	// ボタン感度
+	prefData.ReloadScreen		= YES;	// 画面再読込み
 }
 
 //定義情報の読み込み
@@ -207,14 +224,24 @@ void LoadPref()
 	//ファイルが無い場合は初期化する
 	else{
 		memset(&prefData, 0x00, sizeof(prefData));
-		InitPrefs();
+		InitPref();
 	}
 	//Ver1の場合、Ver2で追加になっている項目を初期化する
-	if(prefData.Ver==1){
+	if(prefData.Ver<=1){
 		prefData.SoundOn			= NO;	// サウンド
 		prefData.SlideRight			= YES;	// 右にスライド
 	}
-	prefData.Ver=2;	//最新版数
+	if(prefData.Ver<=2){
+		prefData.MaxScale			= 4;	// 最大倍率
+		prefData.ButtonIgnore		= 10;	// ボタン感度
+	}
+	if(prefData.Ver<=3){
+		prefData.ReloadScreen		= YES;	// 画面再読込み
+	}
+	if(prefData.Ver<=4){
+		prefData.IsNextZip			= YES;	// 次のZIPを表示
+	}
+	prefData.Ver=5;	//最新版数
 }
 
 //定義情報の書き込み
@@ -238,12 +265,6 @@ void LoadPage()
 
 	memset(pageData, 0x00, sizeof(pageData));
 	if(pfile != 0){
-		memset(tmpFile, 0x00, sizeof(tmpFile));
-		fread(&i, sizeof(i), 1, pfile);	//パスの長さ
-		if(i>0){
-			strcpy(tmpFile, COMICPATH2);
-			fread(&tmpFile[COMICPATHLEN], i, 1, pfile);
-		}
 		while(feof(pfile) == 0){
 			fread(&pageData[PagesCnt], sizeof(PageData), 1, pfile);
 			if(feof(pfile) != 0) break;
@@ -267,12 +288,6 @@ void SavePage()
 	int i = 0;
 	FILE* pfile = fopen(COMIC_PAGE_PATH, "wb");
 	if(pfile != 0){
-		i = strlen(tmpFile) - COMICPATHLEN;
-		if(i<0) i=0;
-		fwrite(&i, sizeof(i), 1, pfile);
-		if(i){
-			fwrite(&tmpFile[COMICPATHLEN], i, 1, pfile);
-		}
 		if(pfile == 0) return;
 		for(i = 0; i < PagesCnt; i++){
 			if(pageData[i].crc == 0) continue;
@@ -282,10 +297,93 @@ void SavePage()
 	}
 }
 
+//状態の初期設定
+void InitStat(void)
+{
+	statData.Ver = 1;
+	statData.ReadFile = -1;
+	statData.ShowView = BWZ_VIEW;
+	statData.BefView = BWZ_VIEW;
+	statData.ZoomRate = 1.0f;
+	statData.offset = CGPointZero;
+}
+
+//最後の状態の読み込み
+void LoadStat()
+{
+	FILE *pfile = fopen(COMIC_STAT_PATH, "rb");
+	if(pfile != 0){
+		fread(&statData, sizeof(statData), 1, pfile);
+		fclose(pfile);
+	}
+	//ファイルが無い場合は初期化する
+	else{
+		memset(&statData, 0x00, sizeof(statData));
+		InitStat();
+	}
+	//Ver1の場合、Ver2で追加になっている項目を初期化する
+	if(statData.Ver<=1){
+		statData.BefView = BWZ_VIEW;
+		statData.ZoomRate = 1.0f;
+	}
+	if(statData.Ver<=2){
+		statData.offset = CGPointZero;
+	}
+	statData.Ver=3;	//最新版数
+//NSLog(@"LoadStat ReadFile=%d", statData.ReadFile);
+}
+
+//最後の状態の書き込み
+void SaveStat()
+{
+	MakeLibDir();
+	
+	if( strlen(tmpFile) > 0 ){
+		statData.ReadFile = crc_code(strlen(tmpFile), tmpFile);
+	}
+	FILE* pfile = fopen(COMIC_STAT_PATH, "wb");
+	if(pfile != 0){
+		fwrite(&statData, sizeof(statData), 1, pfile);
+		fclose(pfile);
+	}
+}
+
+//システム設定の読み込み
+void LoadPsys()
+{
+	char psystmp[23];
+
+	FILE *pfile = fopen(COMIC_PSYS_PATH, "rb");
+	if(pfile != 0){
+		fread(psystmp, sizeof(psystmp), 1, pfile);
+		fclose(pfile);
+	}
+	//ファイルが無い場合は初期化する
+	else{
+		strcpy(psystmp, "05 1024 5120 1400 1200");
+	}
+	psystmp[2] = 0x00;
+	psystmp[7] = 0x00;
+	psystmp[12] = 0x00;
+	psystmp[17] = 0x00;
+	psystmp[22] = 0x00;
+	
+	psysData.ZoomScale = atof(&psystmp[0])*(0.001f);	//ズーム増加率
+	psysData.ZipSkipSize = atoi(&psystmp[3])*1024;		//ZIPファイルスキップサイズ
+	psysData.ImgSkipSize = atoi(&psystmp[8])*1024;		//イメージスキップサイズ
+	psysData.ImgSkipLen = atof(&psystmp[13]);			//イメージスキップ長
+	psysData.ImgResizeLen = atof(&psystmp[18]);		//イメージリサイズ長
+//NSLog(@"psysData.ZoomScale=%f", psysData.ZoomScale);
+//NSLog(@"psysData.ZipSkipSize=%i", psysData.ZipSkipSize);
+//NSLog(@"psysData.ImgSkipSize=%i", psysData.ImgSkipSize);
+//NSLog(@"psysData.ImgSkipLen=%f", psysData.ImgSkipLen);
+//NSLog(@"psysData.ImgResizeLen=%f", psysData.ImgResizeLen);
+}
+
 //デバッグログ
 void debug_log(char *log_data)
 {
-#if 0
+#if 1
 	FILE* pfile = fopen("/Applications/iComic.app/Debug.log", "a");
 	if(log_data==0x00) return;
 	if(log_data[0]==0x00) return;

@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-#import <UIKit/UIProgressIndicator.h>
+//#import <UIKit/UIProgressIndicator.h>
 #import "zlib/unzip.h"
 #import "ScrollImage.h"
 
@@ -11,15 +11,12 @@
 	ScrollImage*	_currentscroll;
 	unzFile			zipfile;			// pointer
 	NSMutableArray*	filenamelist;		//ZIP内のファイル名一覧
-	unsigned int	_currentpos;		//表示イメージのページ番号
-	float			_currentsize;		//ズーム倍率
-//	CGSize			_imagesize;			//イメージサイズ
+	int				_currentpos;		//表示イメージのページ番号
 	UIImage*		_nowimage;			//表示イメージ
-	UITransitionView*	_transition;	//アニメーション？
+	UITransitionView*	_transition;	//
 	char			_filenamebuf[512];	//ZIPファイルパス
 	id				_fileDelegate;		//
 	int				_orient;			//回転角度
-//	bool			toResize;			//リサイズON/OFF
 //	UIProgressIndicator * _progressIndicator;
 }
 
@@ -29,13 +26,14 @@
 -(void) prevFile;
 -(void) dofileEnd;
 -(int)  reloadFile;
+-(int)  reloadFile:(bool)flag;
 -(void) setPage : (int) page;
 -(void) setImageDelegate: (id) dele;
--(void) fitImage;
 -(void) setOrientation: (int) orientation;
 -(void) setScroll:(BOOL) flag decelerationFactor:(float)dec;
 -(void) gravity: (float)x  gy:(float) y gz:(float)z;
--(CGSize) resizeMaxImage: (CGSize) image: (bool) flag;
+-(CGSize) resizeMaxImage:(CGSize)image;
+-(void) scrollToTopRightTmp;
 
 @end
 

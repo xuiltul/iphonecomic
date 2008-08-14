@@ -1,36 +1,40 @@
-CC=arm-apple-darwin-gcc
+CC=arm-apple-darwin9-gcc
 LD=$(CC)
+CFLAGS=-DMOBILE -DVer2 -I/var/include
 #CFLAGS=-O
 LDFLAGS=-lobjc \
 	-framework CoreFoundation \
 	-framework Foundation \
 	-framework UIKit \
-	-framework LayerKit \
 	-framework CoreGraphics \
 	-framework GraphicsServices \
 	-framework CoreSurface \
 	-framework CoreAudio \
 	-framework IOKit \
 	-framework AudioToolbox \
-	-larmfp 
+	-L"/usr/lib" \
+	-F"/System/Library/Frameworks" \
+	-F"/System/Library/PrivateFrameworks" \
+	-bind_at_load 
 
 APPNAME=iComic
 FILES=mainapp.o Application.o FileBrowser.o \
 ImageView.o ScrollImage.o Global.o PrefsView.o \
-FileList.o \
-zlib/ioapi.o zlib/unzip.o zlib/libz.a 
+ZipFileBrowser.o PageBrowser.o \
+zlib/ioapi.o zlib/unzip.o zlib/libz.a
 
 all:    $(APPNAME) package
 
 $(APPNAME):  $(FILES)
 
 	$(LD) $(LDFLAGS) -v -o $@ $^
+	/usr/bin/ldid -S $(APPNAME)
 
 %.o:    %.m
 		$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
 clean:
-		rm -rf *.o *~ $(APPNAME) $(APPNAME).app
+	rm -rf *.o *~ $(APPNAME) $(APPNAME).app
 
 package: $(APPNAME)
 	rm -fr $(APPNAME).app
@@ -39,8 +43,8 @@ package: $(APPNAME)
 	mv $(APPNAME) $(APPNAME).app/$(APPNAME)
 	cp Info.plist $(APPNAME).app/Info.plist
 	cp *.png $(APPNAME).app/
+	cp *.dat $(APPNAME).app/
 	cp Japanese.lproj/*.strings $(APPNAME).app/Japanese.lproj/
-	cp ReadMe $(APPNAME).app/ReadMe
 
 debug: $(APPNAME) package
 

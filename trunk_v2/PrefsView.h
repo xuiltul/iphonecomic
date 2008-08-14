@@ -34,32 +34,30 @@
 	UIPreferencesTable *_prefstable;
 	UINavigationBar *_navbar;
 
-	UIPreferencesControlTableCell*	_bouncecell;
 	UIPreferencesControlTableCell*	_migicell;
 	UIPreferencesControlTableCell*	_scalecell;
-	UIPreferencesControlTableCell*	_statusbarcell;
 	UIPreferencesControlTableCell*	_sliderigntcell;
+	UIPreferencesControlTableCell*	_reloadscreencell;
 	UIPreferencesTextTableCell*		_scrollspeedcell;
+	UIPreferencesTextTableCell*		_maxscalecell;
 
 	UIPreferencesControlTableCell*	_leftbtncell;
-	UIPreferencesControlTableCell*	_fitscrcell;
 	UIPreferencesTextTableCell*		_buttonsizecell;
+	UIPreferencesControlTableCell*	_isnextzip;
 	UIPreferencesControlTableCell*	_gravitycell;
 	UIPreferencesControlTableCell*	_buttoncell;
 	UIPreferencesControlTableCell*	_swipecell;
 	UIPreferencesControlTableCell*	_soundcell;
 
-	UISegmentedControl*				_segCtrl;
-	UIPreferencesTextTableCell*		_segCell;
+	UIPreferencesTextTableCell*		_rotationcell;
 
-//	UIPreferencesControlTableCell *_slidecell;
-//	UIPreferencesControlTableCell *_errorcell;
+//	UISegmentedControl*				_segCtrl;
+//	UIPreferencesTextTableCell*		_segCell;
 
 	id _delegate;
 }
 	
 -(id)initWithFrame:(struct CGRect)frame;
-- (void) setTrans : (UITransitionView*)tr;
 - (void)setDelegate : (id) dele;
 
 @end

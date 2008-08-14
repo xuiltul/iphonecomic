@@ -21,6 +21,8 @@
 #import "Global.h"
 #import <UIKit/UISimpleTableCell.h>
 
+int HitRow;
+
 @implementation FileBrowser 
 - (id)initWithFrame:(struct CGRect)frame{
 	if ((self == [super initWithFrame: frame]) != nil) {
@@ -36,7 +38,6 @@
 		[_table setDelegate: self];
 		[_table setDataSource: self];
 
-		_extensions = [[NSMutableArray alloc] init];
 		_files = [[NSMutableArray alloc] init];
 		_fileview = [[NSMutableArray alloc] init];
 		_rowCount = 0;
@@ -45,12 +46,13 @@
 
 		[self addSubview: _table];
 	}
+	_nowfile = NULL;
 
 	NSBundle *bundle = [NSBundle mainBundle];
 	_folder = [UIImage imageAtPath: [bundle pathForResource:@"folder" ofType:@"png"]];
-	_books = [UIImage imageAtPath: [bundle pathForResource:@"books" ofType:@"png"]];
-	_bookss = [UIImage imageAtPath: [bundle pathForResource:@"bookss" ofType:@"png"]];
-	_booksf = [UIImage imageAtPath: [bundle pathForResource:@"booksf" ofType:@"png"]];
+	_books = [UIImage imageAtPath: [bundle pathForResource:@"folderZip" ofType:@"png"]];
+	_bookss = [UIImage imageAtPath: [bundle pathForResource:@"folderNow" ofType:@"png"]];
+	_booksf = [UIImage imageAtPath: [bundle pathForResource:@"folderEnd" ofType:@"png"]];
 	return self;
 }
 
@@ -60,7 +62,6 @@
 - (void)dealloc {
 	[_path release];
 	[_files release];
-	[_extensions release];
 	[_fileview release];
 	[_table release];
 	_delegate = nil;
@@ -87,22 +88,6 @@
 /******************************/
 /*                            */
 /******************************/
-- (void)addExtension: (NSString *)extension {
-	if (![_extensions containsObject:[extension lowercaseString]]) {
-		[_extensions addObject: [extension lowercaseString]];
-	}
-}
-
-/******************************/
-/*                            */
-/******************************/
-- (void)setExtensions: (NSArray *)extensions {
-	[_extensions setArray: extensions];
-}
-
-/******************************/
-/*                            */
-/******************************/
 - (void)reloadData
 {
 	BOOL isDir;
@@ -112,35 +97,39 @@
 	if ([fileManager fileExistsAtPath:_path] == NO){
 		return;
 	}
+//NSLog(@"**** reloadData ****");
+//NSLog(_nowfile);
+//NSLog(@"tmpFile=%s",tmpFile);
+//NSLog(@"tmpLastFile=%s",tmpLastFile);
+
 	NSString *file;
 	NSMutableString *title;
+	NSArray *extensions = [NSArray arrayWithObjects:@"cbz", @"zip", @"", nil];
+	NSString* filetmpFile = [[NSString stringWithCString:tmpLastFile encoding:NSUTF8StringEncoding]lastPathComponent];
+
+//NSLog(filetmpFile);
 
 	[_files removeAllObjects];
 	[_fileview removeAllObjects];
 
+	int countRow=0;
+	HitRow=0;
 	NSEnumerator *dirEnum = [tempArray objectEnumerator];
 	while (file = [dirEnum nextObject]) {
-		if (_extensions != nil && [_extensions count] > 0) {
-			NSString *extension = [[file pathExtension] lowercaseString];
-			if ([_extensions containsObject:extension]) {
-				[_files addObject: file];
-				
-				title = [NSMutableString stringWithString:file];
-				CFStringNormalize((CFMutableStringRef)title, kCFStringNormalizationFormC);
-//				[_files addObject:title];
-				[_fileview addObject:title];
-			}
-		}else{
+		NSString *extension = [[file pathExtension] lowercaseString];
+		if ([extensions containsObject:extension]) {
 			[_files addObject: file];
-
+			NSLog(file);
+			if( [file isEqualToString:filetmpFile] ){
+				HitRow = countRow;
+				NSLog(@"Hit!=%d",HitRow);
+			}
 			title = [NSMutableString stringWithString:file];
 			CFStringNormalize((CFMutableStringRef)title, kCFStringNormalizationFormC);
-//			[_files addObject:title];
 			[_fileview addObject:title];
+			countRow++;
 		}
  	}
-
-//	[_files sortUsingSelector:@selector(caseInsensitiveCompare:)];
 	_rowCount = [_files count];
 	[_table reloadData];
 	[tempArray release];
@@ -170,7 +159,6 @@
 	char buf0[MAXPATHLEN];
 	
 	UIImageAndTextTableCell *cell = [[[UIImageAndTextTableCell alloc] init] autorelease];
-//	[cell setTitle: [[_files objectAtIndex: row] stringByDeletingPathExtension]];
 	[cell setTitle: [[_fileview objectAtIndex: row] stringByDeletingPathExtension]];
 	NSString* path0 = [_path copy];
 	if([_path characterAtIndex: [_path length] - 1] != '/'){
@@ -178,7 +166,8 @@
 		path0 = [_path stringByAppendingString: @"/"];
 	}
 	NSString *file = [path0 stringByAppendingString:[_files objectAtIndex:row]];
-//	NSLog(file);
+//NSLog(file);
+
 	//ディレクトリの場合
 	if ([[NSFileManager defaultManager] fileExistsAtPath:file isDirectory:&isDir] && isDir){
 		[cell setShowDisclosure:YES];
@@ -236,7 +225,8 @@
 		else
 			[cell setImage: _bookss];
 			
-		[[cell iconImageView] setFrame:CGRectMake(-10,0,12,12)];
+		[[cell iconImageView] setFrame:CGRectMake(-10,0,32,32)];
+		[cell setDisclosureStyle:1];
 	}
 
 	return cell;
@@ -255,10 +245,61 @@
 /******************************/
 - (NSString *)selectedFile
 {
+//NSLog(@"selectedFile");
 	if ([_table selectedRow] == -1)
 		return nil;
-//	NSLog(@"here!");
 	return [_path stringByAppendingPathComponent: [_files objectAtIndex: [_table selectedRow]]];
+}
+
+- (NSString *)selectedFileNext
+{
+//NSLog(@"selectedFileNext");
+	if ((HitRow+1) >= [_files count]){
+//NSLog(@"nil! %d %d", HitRow, [_files count]);
+		return nil;
+	}
+//	NSLog(@"here!");
+	return [_path stringByAppendingPathComponent: [_files objectAtIndex: (HitRow+1)]];
+}
+
+/******************************/
+/*                            */
+/******************************/
+- (void)setSelectFile:(NSString *)file
+{
+//NSLog(@"FileBrowser setSelectFile");
+	_nowfile = [file copy];
+//NSLog(_nowfile);
+}
+
+/******************************/
+/*                            */
+/******************************/
+- (void)table_scroll
+{
+//NSLog(@"table_scroll");
+	[NSTimer scheduledTimerWithTimeInterval:0.1f target:self selector:@selector(table_scroll_end:) userInfo:self repeats:NO];
+}
+
+- (void)table_scroll_end:(NSTimer*)timer
+{
+//NSLog(@"table_scroll_end");
+	[_table scrollRowToVisible:0];
+	if( isShowImage == YES ){
+		[NSTimer scheduledTimerWithTimeInterval:0.5f target:self selector:@selector(table_scroll_goImage:) userInfo:self repeats:NO];
+	}
+}
+
+- (void)table_scroll_goImage:(NSTimer*)timer
+{
+	isShowImage = NO;
+//NSLog(@"table_scroll_goImage");
+	if( ((HitRow+1) >= [_files count]) || !prefData.IsNextZip ){
+//NSLog(@"nil!2 %d %d", HitRow, [_files count]);
+		return;
+	}
+	if( [_delegate respondsToSelector:@selector( fileBrowser:fileSelected: )] )
+		[_delegate fileBrowser:self fileSelected:[self selectedFileNext]];
 }
 
 
