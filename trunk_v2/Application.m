@@ -169,8 +169,9 @@ void initialize(int hz) {
 	[_navbar setDelegate:self];
 	[_navbar hideButtons];
 	[_navbar setPopDelegate:self];
-	[_navbar showLeftButton:nil withStyle:2
-				rightButton:NSLocalizedString(@"Back", nil) withStyle:0];	//ボタンを表示
+//	[_navbar showLeftButton:nil withStyle:2
+//				rightButton:NSLocalizedString(@"Back", nil) withStyle:0];	//ボタンを表示
+	[_navbar showLeftButton:nil withStyle:0 rightButton:nil withStyle:0];
 	UINavigationItem *navItem;													//タイトル表示
 	navItem = [[UINavigationItem alloc] initWithTitle: NSLocalizedString(@"Select file", nil)];
 	[_navbar pushNavigationItem: navItem];
