@@ -155,6 +155,9 @@ static bool _evntEnable;
 	resizeTmp.width		= (_isvert?	_imagesize.width:	_imagesize.height);
 	resizeTmp.height	= (_isvert?	_imagesize.height:	_imagesize.width);
 
+	resizeTmp.width		= (int)resizeTmp.width;
+	resizeTmp.height	= (int)	resizeTmp.height;
+
 	CGRect frame = CGRectMake(0, 0, resizeTmp.width, resizeTmp.height);
 	[_imageview setFrame: frame];			//サイズを変更する
 	[self setContentSize: frame.size];		//画面表示用イメージオブジェクトのサイズを保存
@@ -407,43 +410,43 @@ NSLog(@"scroll alertSheet");
 /******************************/
 /* スワイプが有効かを返す     */
 /******************************/
-- (BOOL)canHandleSwipes
-{
-//	return (prefData.SwipeSlide && !_isDragged && !isZoom);
-	return (prefData.SwipeSlide && !_isDragged);
-}
+//- (BOOL)canHandleSwipes
+//{
+////	return (prefData.SwipeSlide && !_isDragged && !isZoom);
+//	return (prefData.SwipeSlide && !_isDragged);
+//}
 
 /******************************/
 /* スワイプ操作               */
 /******************************/
-- (int)swipe: (int)orientation withEvent: (GSEventRef)event
-{
-	int next=0;
-	switch(_orient){
-	case 1:		//正面 0°
-		if( orientation == 8 )		next = (prefData.SlideRight? NEXT_PAGE: PREV_PAGE);
-		else if( orientation == 4 )	next = (prefData.SlideRight? PREV_PAGE: NEXT_PAGE);
-		break;
-	case 2:		//180°
-		if( orientation == 4 )		next = (prefData.SlideRight? NEXT_PAGE: PREV_PAGE);
-		else if( orientation == 8 )	next = (prefData.SlideRight? PREV_PAGE: NEXT_PAGE);
-		break;
-	case 3:		//左 90°
-		if( orientation == 2 )		next = (prefData.SlideRight? NEXT_PAGE: PREV_PAGE);
-		else if( orientation == 1 )	next = (prefData.SlideRight? PREV_PAGE: NEXT_PAGE);
-		break;
-	case 4:		//右 270°
-		if( orientation == 1 )		next = (prefData.SlideRight? NEXT_PAGE: PREV_PAGE);
-		else if( orientation == 2 )	next = (prefData.SlideRight? PREV_PAGE: NEXT_PAGE);
-		break;
-	default:
-		break;
-	}
-	_isDragged = false;
-	isZoom= false;
-	[self goNextPage:next];
-	[super swipe:orientation withEvent:event];
-}
+//- (int)swipe: (int)orientation withEvent: (GSEventRef)event
+//{
+//	int next=0;
+//	switch(_orient){
+//	case 1:		//正面 0°
+//		if( orientation == 8 )		next = (prefData.SlideRight? NEXT_PAGE: PREV_PAGE);
+//		else if( orientation == 4 )	next = (prefData.SlideRight? PREV_PAGE: NEXT_PAGE);
+//		break;
+//	case 2:		//180°
+//		if( orientation == 4 )		next = (prefData.SlideRight? NEXT_PAGE: PREV_PAGE);
+//		else if( orientation == 8 )	next = (prefData.SlideRight? PREV_PAGE: NEXT_PAGE);
+//		break;
+//	case 3:		//左 90°
+//		if( orientation == 2 )		next = (prefData.SlideRight? NEXT_PAGE: PREV_PAGE);
+//		else if( orientation == 1 )	next = (prefData.SlideRight? PREV_PAGE: NEXT_PAGE);
+//		break;
+//	case 4:		//右 270°
+//		if( orientation == 1 )		next = (prefData.SlideRight? NEXT_PAGE: PREV_PAGE);
+//		else if( orientation == 2 )	next = (prefData.SlideRight? PREV_PAGE: NEXT_PAGE);
+//		break;
+//	default:
+//		break;
+//	}
+//	_isDragged = false;
+//	isZoom= false;
+//	[self goNextPage:next];
+//	[super swipe:orientation withEvent:event];
+//}
 
 /******************************/
 /* 次の画面に移動する         */

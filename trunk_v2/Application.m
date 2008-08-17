@@ -169,50 +169,53 @@ void initialize(int hz) {
 	[_navbar setDelegate:self];
 	[_navbar hideButtons];
 	[_navbar setPopDelegate:self];
-//	[_navbar showLeftButton:nil withStyle:2
-//				rightButton:NSLocalizedString(@"Back", nil) withStyle:0];	//ボタンを表示
-	[_navbar showLeftButton:nil withStyle:0 rightButton:nil withStyle:0];
+	[_navbar showLeftButton:nil withStyle:2
+				rightButton:NSLocalizedString(@"Settings", nil) withStyle:0];	//ボタンを表示
+//	[_navbar showLeftButton:nil withStyle:0 rightButton:nil withStyle:0];
 	UINavigationItem *navItem;													//タイトル表示
 	navItem = [[UINavigationItem alloc] initWithTitle: NSLocalizedString(@"Select file", nil)];
 	[_navbar pushNavigationItem: navItem];
 
-	//setup buttonbar item 1:folder
-	NSDictionary*	btnFolderItem;
-	btnFolderItem = [NSDictionary dictionaryWithObjectsAndKeys:
-			self, kUIButtonBarButtonTarget,
-			@"btnFolderAction:", kUIButtonBarButtonAction, 
-			@"folder.png", kUIButtonBarButtonInfo,
-			[NSNumber numberWithUnsignedInt:1], kUIButtonBarButtonTag, 
-			nil];
-
-	//setup buttonbar item 2:history
-	NSDictionary*	btnHistoryItem;
-	btnHistoryItem = [NSDictionary dictionaryWithObjectsAndKeys:
-			self, kUIButtonBarButtonTarget,
-			@"btnHistoryAction:", kUIButtonBarButtonAction, 
-			@"folderNow.png", kUIButtonBarButtonInfo,
-			[NSNumber numberWithUnsignedInt:2], kUIButtonBarButtonTag, 
-			nil];
-
-	//setup buttonbar item 3:setup
-	NSDictionary*	btnSetupItem;
-	btnSetupItem = [NSDictionary dictionaryWithObjectsAndKeys:
-			self, kUIButtonBarButtonTarget,
-			@"btnSetupAction:", kUIButtonBarButtonAction, 
-			@"setup.png", kUIButtonBarButtonInfo,
-			[NSNumber numberWithUnsignedInt:3], kUIButtonBarButtonTag, 
-			nil];
-
-	NSArray* items;
-	items = [NSArray arrayWithObjects:btnFolderItem, btnHistoryItem, btnSetupItem, nil];
-
+//	//setup buttonbar item 1:folder
+//	NSDictionary*	btnFolderItem;
+//	btnFolderItem = [NSDictionary dictionaryWithObjectsAndKeys:
+//			self, kUIButtonBarButtonTarget,
+//			@"btnFolderAction:", kUIButtonBarButtonAction, 
+//			@"folder.png", kUIButtonBarButtonInfo,
+//			[NSNumber numberWithUnsignedInt:1], kUIButtonBarButtonTag, 
+//			nil];
+//
+//	//setup buttonbar item 2:history
+//	NSDictionary*	btnHistoryItem;
+//	btnHistoryItem = [NSDictionary dictionaryWithObjectsAndKeys:
+//			self, kUIButtonBarButtonTarget,
+//			@"btnHistoryAction:", kUIButtonBarButtonAction, 
+//			@"folderNow.png", kUIButtonBarButtonInfo,
+//			[NSNumber numberWithUnsignedInt:2], kUIButtonBarButtonTag, 
+//			nil];
+//
+//	//setup buttonbar item 3:setup
+//	NSDictionary*	btnSetupItem;
+//	btnSetupItem = [NSDictionary dictionaryWithObjectsAndKeys:
+//			self, kUIButtonBarButtonTarget,
+//			@"btnSetupAction:", kUIButtonBarButtonAction, 
+//			@"setup.png", kUIButtonBarButtonInfo,
+//			[NSNumber numberWithUnsignedInt:3], kUIButtonBarButtonTag, 
+//			nil];
+//
+//	NSArray* items;
+//	items = [NSArray arrayWithObjects:btnFolderItem, btnHistoryItem, btnSetupItem, nil];
+//
 	//setup tableview
+//	_tabletransition = [[UITransitionView alloc] initWithFrame:
+//			CGRectMake(0, STSBAR+NAVBAR, screct.size.width, screct.size.height-STSBAR-NAVBAR-BTNBAR)];
 	_tabletransition = [[UITransitionView alloc] initWithFrame:
-			CGRectMake(0, STSBAR+NAVBAR, screct.size.width, screct.size.height-STSBAR-NAVBAR-BTNBAR)];
+			CGRectMake(0, STSBAR+NAVBAR, screct.size.width, screct.size.height-STSBAR-NAVBAR)];
 	[_tabletransition setDelegate:self];
 	
 	CGRect bwrect = screct;
-	bwrect.size.height -= (STSBAR+NAVBAR+BTNBAR);
+//	bwrect.size.height -= (STSBAR+NAVBAR+BTNBAR);
+	bwrect.size.height -= (STSBAR+NAVBAR);
 
 	//setup browser
 	_browser = [[FileBrowser alloc] initWithFrame:bwrect];
@@ -241,34 +244,34 @@ void initialize(int hz) {
 	[_mainview addSubview:_tabletransition];
 	_currentBrowser = _browser;
 
-	//setup buttonbar
-	_buttonBar = [[[UIButtonBar alloc]
-			initInView:_mainview
-			withFrame:CGRectMake(0, screct.size.height-BTNBAR, screct.size.width, BTNBAR)
-			withItemList:items] autorelease];
-	[_buttonBar setDelegate: self];
-	[_buttonBar setBarStyle:2];
-
-#if 0
-	//show button
-	int buttons[3] = { 1, 2, 3 };
-	[_buttonBar showButtons:buttons withCount:3 withDuration:0];
-
-	//align button
-	[[_buttonBar viewWithTag:1] setFrame:CGRectMake( 0, 0, 64, 48)];
-	[[_buttonBar viewWithTag:1] _setButtonBarHitRect:CGRectMake(0, 0, 64, 48)];
-	[[_buttonBar viewWithTag:2] setFrame:CGRectMake( 65, 0, 64, 48)];
-	[[_buttonBar viewWithTag:2] _setButtonBarHitRect:CGRectMake(0, 0, 64, 48)];
-	[[_buttonBar viewWithTag:3] setFrame:CGRectMake( 256, 0, 64, 48)];
-	[[_buttonBar viewWithTag:3] _setButtonBarHitRect:CGRectMake(0, 0, 64, 48)];
-#endif
-	//show button
-	int buttons[1] = { 3 };
-	[_buttonBar showButtons:buttons withCount:1 withDuration:0];
-
-	//align button
-	[[_buttonBar viewWithTag:3] setFrame:CGRectMake( 256, 0, 64, 48)];
-	[[_buttonBar viewWithTag:3] _setButtonBarHitRect:CGRectMake(0, 0, 64, 48)];
+//	//setup buttonbar
+//	_buttonBar = [[[UIButtonBar alloc]
+//			initInView:_mainview
+//			withFrame:CGRectMake(0, screct.size.height-BTNBAR, screct.size.width, BTNBAR)
+//			withItemList:items] autorelease];
+//	[_buttonBar setDelegate: self];
+//	[_buttonBar setBarStyle:2];
+//
+//#if 0
+//	//show button
+//	int buttons[3] = { 1, 2, 3 };
+//	[_buttonBar showButtons:buttons withCount:3 withDuration:0];
+//
+//	//align button
+//	[[_buttonBar viewWithTag:1] setFrame:CGRectMake( 0, 0, 64, 48)];
+//	[[_buttonBar viewWithTag:1] _setButtonBarHitRect:CGRectMake(0, 0, 64, 48)];
+//	[[_buttonBar viewWithTag:2] setFrame:CGRectMake( 65, 0, 64, 48)];
+//	[[_buttonBar viewWithTag:2] _setButtonBarHitRect:CGRectMake(0, 0, 64, 48)];
+//	[[_buttonBar viewWithTag:3] setFrame:CGRectMake( 256, 0, 64, 48)];
+//	[[_buttonBar viewWithTag:3] _setButtonBarHitRect:CGRectMake(0, 0, 64, 48)];
+//#endif
+//	//show button
+//	int buttons[1] = { 3 };
+//	[_buttonBar showButtons:buttons withCount:1 withDuration:0];
+//
+//	//align button
+//	[[_buttonBar viewWithTag:3] setFrame:CGRectMake( 256, 0, 64, 48)];
+//	[[_buttonBar viewWithTag:3] _setButtonBarHitRect:CGRectMake(0, 0, 64, 48)];
 //######
 
 	initialize(30);
@@ -390,15 +393,15 @@ void initialize(int hz) {
 - (void)navigationBar:(UINavigationBar*)navbar buttonClicked:(int)button
 {
 //	if(row == -1) return;
-//	//設定画面を表示する
-//	[_transition transition:4 toView:_prefsview];
+	//設定画面を表示する
+	[_transition transition:4 toView:_prefsview];
 
 //NSLog(@"aaa %s", tmpLastFile);
 
-	if( strlen(tmpLastFile) > 0 ){
-		strcpy( tmpFile, tmpLastFile );
-		[self viewSelector:IMG_VIEW:1];
-	}
+//	if( strlen(tmpLastFile) > 0 ){
+//		strcpy( tmpFile, tmpLastFile );
+//		[self viewSelector:IMG_VIEW:1];
+//	}
 	
 	return;	
 }
