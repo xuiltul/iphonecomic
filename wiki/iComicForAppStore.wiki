@@ -1,0 +1,8 @@
+#summary One-sentence summary of this page.
+
+Now, I developed iComic for AppStore.
+I am stopped to develop iComic for jailbreak.
+
+iComic for AppStore passed the check of Apple.
+But, iComic cannot be released with Appstore 
+until it is a contract between Apple and me.
