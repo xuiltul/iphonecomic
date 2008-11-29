@@ -4,3 +4,5 @@ I am stopped to develop iComic for jailbreak.
 iComic for AppStore passed the check of Apple.
 But, iComic cannot be released with Appstore 
 until it is a contract between Apple and me.
+
+http://icomic.wiki.fc2.com/
